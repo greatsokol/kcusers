@@ -1,5 +1,7 @@
 package org.gs.kcusers.configs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,15 +18,17 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-@EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
+@EnableMethodSecurity(securedEnabled = true)
 @Configuration
 public class SecurityConfig {
+    Logger logger = LoggerFactory.getLogger(SecurityConfig.class.getName());
+
     @Autowired
     ClientRegistrationRepository clientRegistrationRepository;
 
@@ -38,6 +42,7 @@ public class SecurityConfig {
 //                        .requestMatchers("/manager.html").hasAuthority("admin")
 //                .anyRequest().authenticated())
                 .authorizeHttpRequests(req -> req.anyRequest().authenticated())
+                .oauth2Login(login -> login.successHandler(authenticationSuccessHandler()))
                 .logout(logout -> logout
                         .logoutSuccessHandler(oidcLogoutSuccessHandler())
                         .logoutSuccessUrl("/")
@@ -47,11 +52,18 @@ public class SecurityConfig {
                 .build();
     }
 
+    private AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            DefaultOidcUser principal = (DefaultOidcUser) authentication.getPrincipal();
+            logger.info("Authentication success {} ({})",
+                    principal.getPreferredUsername(), authentication.getAuthorities());
+            response.sendRedirect("/");
+        };
+    }
+
     @Bean
     public OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
-        OidcClientInitiatedLogoutSuccessHandler successHandler =
-                new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        return successHandler;
+        return new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
     }
 
 //    @Bean
@@ -75,7 +87,7 @@ public class SecurityConfig {
 //    }
 
     @Bean
-    public OAuth2UserService<OidcUserRequest, OidcUser> oAuth2UserService(JwtDecoder jwtDecoderByPublicKeyValue) {
+    public OAuth2UserService<OidcUserRequest, OidcUser> oAuth2UserService() {
         var oidcUserService = new OidcUserService();
         return userRequest -> {
             var oidcUser = oidcUserService.loadUser(userRequest);
