@@ -13,7 +13,7 @@ Otherwise, they will be blocked again.
 
 A web application for monitoring the service status is available on `localhost:9000`.
 
-Users who can be monitored are determined by roles `front.userroles`.
+Users who can observe are defined by roles `front.userroles`.
 
 Users who can make changes are defined by roles `front.adminroles`.
 
