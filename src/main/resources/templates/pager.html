@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>pager</title>
+    <meta charset="UTF-8"/>
+</head>
+<body>
+<nav th:fragment="pager">
+    <ul class="pagination">
+        <li class="page-item">
+            <a th:class="${page.getNumber() == 0 ? 'page-link disabled' : 'page-link'}"
+               th:href="'/?page='+${page.getNumber()-1}">Previous</a>
+        </li>
+        <li th:class="${number == page.getNumber() ? 'page-item active' : 'page-item'}"
+            th:each="number : ${#numbers.sequence(0, page.getTotalPages()-1) }">
+            <a class="page-link" th:href="'/?page='+${number}" th:text="${number+1}"/>
+        </li>
+        <li class="page-item">
+            <a th:class="${page.getNumber() == page.getTotalPages()-1 ? 'page-link disabled' : 'page-link'}"
+               th:href="'/?page='+${page.getNumber()+1}">Next</a>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>
