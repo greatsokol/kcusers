@@ -7,7 +7,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${KCUSERS_APP_HOME}/logs/app.log</file>
+        <file>${KCUSERS_APP_HOME:-./}/logs/app.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
             <fileNamePattern>../logs/app_%d{yyyy-MM-dd}.log</fileNamePattern>
