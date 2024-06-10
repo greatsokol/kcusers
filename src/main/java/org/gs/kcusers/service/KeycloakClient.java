@@ -117,7 +117,7 @@ public class KeycloakClient {
 
                                 User user = userRepository.findByUserNameAndRealmName(userRepresentation.getUsername(), realmName);
 
-                                if(user != null){
+                                if (user != null) {
                                     // if user was enabled on keycloak side
                                     // we have to redisable him
                                     user.setEnabled(userRepresentation.isEnabled());
@@ -170,6 +170,7 @@ public class KeycloakClient {
                     logger.info("Found already saved user {} ({}) as disabled. Will be DISABLED.",
                             ourSavedUser.getUserName(), ourSavedUser.getRealmName());
                 }
+
                 user.setEnabled(ourSavedUser.getEnabled());
                 user.setCreated(ourSavedUser.getCreated());
             }
@@ -177,26 +178,24 @@ public class KeycloakClient {
             // фильтруем недавно созданных пользователей (текущая дата - настройка inactivity.days)
             // фильтруем активных пользователей (текущая дата - настройка inactivity.days)
             // фильтруем недавно включенных вручную пользователей (настройка inactivity.immunityperiodminutes)
-            if (user.getEnabled() && user.userShouldBeBlocked()) {
+            boolean shouldBeBlocked = user.userShouldBeBlocked();
+            if (user.getEnabled() && shouldBeBlocked) {
                 user.setEnabled(false);
                 logger.info("User {} ({}) become inactive. Will be DISABLED.", user.getUserName(), user.getRealmName());
                 disable = true;
+            } else if (!user.getEnabled() && !shouldBeBlocked) {
+                user.setEnabled(true);
+                user.setManuallyEnabledTime(null);
+                user.setCommentEnabledBy("service automatically");
+                userRepository.save(user);
             }
 
-            if (!disable) {
-                try {
-                    if (user.userIsNotInImmunityPeriod()) user.setManuallyEnabledTime(null);
-                    userRepository.save(user);
-                } catch (Exception ex) {
-                    logger.error("Database error {}", ex.getLocalizedMessage());
+            if (disable) {
+                if (!KEYCLOAK_DRY_RUN) {
+                    disableUser(keycloak, user);
+                } else {
+                    logger.info("(DRY RUN) DISABLED user {} ({})", user.getUserName(), user.getRealmName());
                 }
-                continue;
-            }
-
-            if (!KEYCLOAK_DRY_RUN) {
-                disableUser(keycloak, user);
-            } else {
-                logger.info("(DRY RUN) DISABLED user {} ({})", user.getUserName(), user.getRealmName());
             }
         }
     }

@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 @Entity
 @Data
@@ -116,11 +117,24 @@ public class User {
         return result;
     }
 
-    protected static class UserPK implements Serializable {
+    public static class UserPK implements Serializable {
         private String userName;
         private String realmName;
 
         public UserPK() {
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            UserPK userPK = (UserPK) o;
+            return Objects.equals(userName, userPK.userName) && Objects.equals(realmName, userPK.realmName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(userName, realmName);
         }
     }
 }
