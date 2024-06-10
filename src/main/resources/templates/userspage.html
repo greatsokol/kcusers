@@ -69,8 +69,7 @@
 
             </tbody>
         </table>
-
-        <div th:if="${page.getTotalPages() > 1}" th:insert="~{pager.html :: pager}"></div>
+        <div  th:insert="~{pager.html :: pager}"></div>
     </div>
 </div>
 <script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>

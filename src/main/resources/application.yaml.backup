@@ -41,7 +41,6 @@ front:
   client-secret: ${clsec:UqFI6b8az9RoTs6r4QkXXu7QdgUbBpMm}
   userroles: user
   adminroles: admin
-  pagesize: 10
 
 #-----------------------------------------------------------------------------
 service:
