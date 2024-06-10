@@ -188,6 +188,8 @@ public class KeycloakClient {
                 user.setManuallyEnabledTime(null);
                 user.setCommentEnabledBy("service automatically");
                 userRepository.save(user);
+            } else if (ourSavedUser == null) {
+                userRepository.save(user); // add new user
             }
 
             if (disable) {
