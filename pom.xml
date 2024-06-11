@@ -15,7 +15,7 @@
     <description>Service to watch for 90 days of inactivity of Keycloak user</description>
     <properties>
         <java.version>17</java.version>
-        <spring.version>6.1.2</spring.version>
+<!--        <spring.version>6.1.2</spring.version>-->
         <keycloak.version>24.0.0</keycloak.version>
     </properties>
     <dependencies>
