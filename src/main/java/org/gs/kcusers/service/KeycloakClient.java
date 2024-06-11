@@ -18,15 +18,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-@Configuration
+@Component
 @EnableScheduling
 public class KeycloakClient {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakClient.class);
@@ -80,6 +80,55 @@ public class KeycloakClient {
         logger.info("-------- FINISHED TASK --------");
     }
 
+    private Long getLastLoginTime(Keycloak keycloak, String realmName, UserRepresentation userRepresentation) {
+        String from = LocalDate.now().minusDays(90).toString();
+        String to = LocalDate.now().plusDays(1).toString();
+
+        return keycloak
+                .realm(realmName)
+                .getEvents(
+                        List.of("LOGIN"),
+                        null,
+                        userRepresentation.getId(),
+                        from,
+                        to,
+                        null,
+                        null,
+                        null
+                )
+                .stream()
+                .mapToLong(EventRepresentation::getTime)
+                .max()
+                .orElse(0L);
+    }
+
+    private User userPresentationToUser(Keycloak keycloak, String realmName, UserRepresentation userRepresentation) {
+        var lastLoginTime = getLastLoginTime(keycloak, realmName, userRepresentation);
+
+        User user = userRepository.findByUserNameAndRealmName(userRepresentation.getUsername(), realmName);
+
+        if (user != null) {
+            // if user was enabled on keycloak side
+            // we have to redisable him
+            user.setEnabled(userRepresentation.isEnabled());
+            user.setUserId(userRepresentation.getId());
+            user.setLastLogin(lastLoginTime);
+            return user;
+        } else {
+            return new User(
+                    userRepresentation.getUsername(),
+                    realmName,
+                    userRepresentation.getId(),
+                    lastLoginTime,
+                    userRepresentation.getCreatedTimestamp(),
+                    userRepresentation.isEnabled(),
+                    null,
+                    null
+            );
+        }
+    }
+
+
     private List<User> getUsers(Keycloak keycloak, String realmName) {
         List<User> users = null;
 
@@ -87,56 +136,14 @@ public class KeycloakClient {
             logger.info("-- Looking for users of realm {} (skipping protected users {}) ",
                     realmName, protectedUsers.getProtectedUsers().toString());
 
-            String from = LocalDate.now().minusDays(90).toString();
-            String to = LocalDate.now().plusDays(1).toString();
-
             users = keycloak
                     .realm(realmName)
                     .users()
                     .list()
                     .stream()
                     // фильтруем пользователей, которые указаны в настройке protectedUsers
-                    .filter(user -> !protectedUsers.getProtectedUsers().contains(user.getUsername()))
-                    .map(userRepresentation -> {
-                                var lastLoginTime = keycloak
-                                        .realm(realmName)
-                                        .getEvents(
-                                                List.of("LOGIN"),
-                                                null,
-                                                userRepresentation.getId(),
-                                                from,
-                                                to,
-                                                null,
-                                                null,
-                                                null
-                                        )
-                                        .stream()
-                                        .mapToLong(EventRepresentation::getTime)
-                                        .max()
-                                        .orElse(0L);
-
-                                User user = userRepository.findByUserNameAndRealmName(userRepresentation.getUsername(), realmName);
-
-                                if (user != null) {
-                                    // if user was enabled on keycloak side
-                                    // we have to redisable him
-                                    user.setEnabled(userRepresentation.isEnabled());
-                                    user.setUserId(userRepresentation.getId());
-                                    user.setLastLogin(lastLoginTime);
-                                    return user;
-                                } else {
-                                    return new User(
-                                            userRepresentation.getUsername(),
-                                            realmName,
-                                            userRepresentation.getId(),
-                                            lastLoginTime,
-                                            userRepresentation.getCreatedTimestamp(),
-                                            userRepresentation.isEnabled(),
-                                            null,
-                                            null
-                                    );
-                                }
-                            }
+                    .filter(userRepresentation -> !protectedUsers.getProtectedUsers().contains(userRepresentation.getUsername()))
+                    .map(userRepresentation -> userPresentationToUser(keycloak, realmName, userRepresentation)
                     ).toList();
 
             logger.info("Users of realm {} found: {}", realmName, users.stream().map(User::getUserName).toList());

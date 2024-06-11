@@ -16,8 +16,12 @@ import java.util.Map;
 @Controller
 @RequestMapping("/user")
 public class UserContoller extends CommonController {
+    KeycloakClient keycloakClient;
+
     @Autowired
-    KeycloakClient kk;
+    public UserContoller(KeycloakClient keycloakClient){
+        this.keycloakClient = keycloakClient;
+    }
 
     @PreAuthorize("hasAnyAuthority(@getAdminRoles)")
     @GetMapping(path = "/{realmName}/{userName}")
@@ -55,7 +59,7 @@ public class UserContoller extends CommonController {
             }
             user.setManuallyEnabledTime(null);
         }
-        kk.updateUserFromController(user);
+        keycloakClient.updateUserFromController(user);
         model.put("user", user);
         model.put("authorizedusername", getAuthorizedUserName());
         return "userpage";
