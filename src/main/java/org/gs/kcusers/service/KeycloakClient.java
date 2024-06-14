@@ -190,12 +190,13 @@ public class KeycloakClient {
                 user.setEnabled(false);
                 logger.info("User {} ({}) become inactive. Will be DISABLED.", user.getUserName(), user.getRealmName());
                 disable = true;
-            } else if (!user.getEnabled() && !shouldBeBlocked) {
-                user.setEnabled(true);
-                user.setManuallyEnabledTime(null);
-                user.setCommentEnabledBy("service automatically");
-                userRepository.save(user);
-            } else if (ourSavedUser == null) {
+            } //else if (!user.getEnabled() && !shouldBeBlocked) {
+            //user.setEnabled(true);
+            //user.setManuallyEnabledTime(null);
+            //user.setCommentEnabledBy("service automatically");
+            //userRepository.save(user);
+            //} else
+            else if (ourSavedUser == null) {
                 userRepository.save(user); // add new user
             }
 

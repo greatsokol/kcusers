@@ -117,6 +117,29 @@ public class User {
         return result;
     }
 
+    public void setUserStatusFromController(boolean enabled, String adminName) {
+        boolean userShouldBeBlocked = userShouldBeBlocked();
+        boolean enableTemporarily = !getEnabled() && userShouldBeBlocked;
+        setEnabled(enabled);
+        if (enabled) {
+            if (enableTemporarily) {
+                setCommentEnabledTemporarily();
+                setManuallyEnabledTime(Instant.now().toEpochMilli());
+            } else {
+                setCommentEnabledBy(adminName);
+                setManuallyEnabledTime(null);
+            }
+        } else {
+            if (userShouldBeBlocked) {
+                setCommentDisabledForInactivity();
+            } else {
+                setCommentDisabledBy(adminName);
+            }
+            setManuallyEnabledTime(null);
+        }
+    }
+
+
     public static class UserPK implements Serializable {
         private String userName;
         private String realmName;

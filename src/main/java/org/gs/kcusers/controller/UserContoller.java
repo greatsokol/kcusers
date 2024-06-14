@@ -9,7 +9,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.Map;
 
 @EnableWebSecurity
@@ -19,7 +18,7 @@ public class UserContoller extends CommonController {
     KeycloakClient keycloakClient;
 
     @Autowired
-    public UserContoller(KeycloakClient keycloakClient){
+    public UserContoller(KeycloakClient keycloakClient) {
         this.keycloakClient = keycloakClient;
     }
 
@@ -40,25 +39,7 @@ public class UserContoller extends CommonController {
                           Map<String, Object> model) {
         User user = userRepository.findByUserNameAndRealmName(userName, realmName);
         boolean wantedEnabled = formData.getFirst("enabled") != null;
-        boolean userShouldBeBlocked = user.userShouldBeBlocked();
-        boolean enableTemporarily = !user.getEnabled() && userShouldBeBlocked;
-        user.setEnabled(wantedEnabled);
-        if (wantedEnabled) {
-            if (enableTemporarily) {
-                user.setCommentEnabledTemporarily();
-                user.setManuallyEnabledTime(Instant.now().toEpochMilli());
-            } else {
-                user.setCommentEnabledBy(getAuthorizedUserName());
-                user.setManuallyEnabledTime(null);
-            }
-        } else {
-            if (userShouldBeBlocked) {
-                user.setCommentDisabledForInactivity();
-            } else {
-                user.setCommentDisabledBy(getAuthorizedUserName());
-            }
-            user.setManuallyEnabledTime(null);
-        }
+        user.setUserStatusFromController(wantedEnabled, getAuthorizedUserName());
         keycloakClient.updateUserFromController(user);
         model.put("user", user);
         model.put("authorizedusername", getAuthorizedUserName());
