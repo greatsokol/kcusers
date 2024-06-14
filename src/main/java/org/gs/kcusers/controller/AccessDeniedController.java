@@ -16,7 +16,11 @@ public class AccessDeniedController extends CommonController {
     @GetMapping
     public String accessDenied(Map<String, Object> model) {
         model.put("authorizedusername", getAuthorizedUserName());
-        model.put("authorities", getAuthorities());
+        model.put("authorities", grantedAuthoritiesListAsString());
+        model.put("userrolesgranted", userRolesGranted());
+        model.put("userroles", userRoles);
+        model.put("adminrolesgranted", adminRolesGranted());
+        model.put("adminroles", adminRoles);
         return "access-denied";
     }
 }

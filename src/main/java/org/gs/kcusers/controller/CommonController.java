@@ -18,10 +18,10 @@ public class CommonController {
     protected UserRepository userRepository;
 
     @Value("${front.adminroles}")
-    private String adminRoles;
+    protected String adminRoles;
 
     @Value("${front.userroles}")
-    private String userRoles;
+    protected String userRoles;
 
     @Bean
     protected List<String> getUserRoles() {
@@ -40,12 +40,24 @@ public class CommonController {
         return principal.getPreferredUsername();
     }
 
-    protected String getAuthorities() {
+    protected List<String> grantedAuthoritiesList() {
         DefaultOidcUser principal = (DefaultOidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return String.join(", ", principal.
+        return principal.
                 getAuthorities().
                 stream().
                 map(GrantedAuthority::getAuthority).
-                toList());
+                toList();
+    }
+
+    protected String grantedAuthoritiesListAsString() {
+        return String.join(", ", grantedAuthoritiesList());
+    }
+
+    protected Boolean userRolesGranted() {
+        return grantedAuthoritiesList().stream().anyMatch(getUserRoles()::contains);
+    }
+
+    protected Boolean adminRolesGranted() {
+        return grantedAuthoritiesList().stream().anyMatch(getAdminRoles()::contains);
     }
 }
