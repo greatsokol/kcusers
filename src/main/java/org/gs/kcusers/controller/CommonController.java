@@ -4,6 +4,7 @@ import org.gs.kcusers.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
@@ -37,5 +38,14 @@ public class CommonController {
     protected String getAuthorizedUserName() {
         DefaultOidcUser principal = (DefaultOidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return principal.getPreferredUsername();
+    }
+
+    protected String getAuthorities() {
+        DefaultOidcUser principal = (DefaultOidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return String.join(", ", principal.
+                getAuthorities().
+                stream().
+                map(GrantedAuthority::getAuthority).
+                toList());
     }
 }

@@ -27,7 +27,7 @@
                th:if="${filter != null}">Dismiss</a>
 
             <a aria-current="page" class="btn btn-outline-info" href="/logout"
-               th:text="'Logout ' + ${authorizedusername}"/>
+               th:text="'Logout ' + ${authorizedusername}"></a>
         </div>
     </nav>
     <div th:if="${page.getContent().isEmpty()}" class="text-center h3">

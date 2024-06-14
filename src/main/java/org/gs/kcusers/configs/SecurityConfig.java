@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true))
+                .exceptionHandling(ex -> ex.accessDeniedPage("/access-denied"))
                 .build();
     }
 
