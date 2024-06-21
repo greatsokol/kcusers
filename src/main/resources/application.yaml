@@ -37,7 +37,7 @@ db:
 
 #-----------------------------------------------------------------------------
 front:
-  issuer-uri: http://localhost:8080/realms/master
+  issuer-uri: https://localhost:8443/realms/master
   client-id: test_client
   client-secret: ${clsec:8iiiFZBcoLtYL1CjMRRsVfSdCrz6m751}
   userroles: user
@@ -48,7 +48,7 @@ service:
   cron: 00 * * * * *
   keycloakclient:
     realms: master,APIM,FINSTAR
-    url: http://localhost:8080
+    url: https://localhost:8443
     client: admin-cli
     admin:
       realm: master
