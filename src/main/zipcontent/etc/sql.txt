@@ -12,3 +12,16 @@ create table kcusers.users
     manually_enabled_time bigint,
     comment varchar(255),
     primary key (user_name, realm_name));
+
+drop table kcusers.events;
+
+create table kcusers.events
+    (
+    user_name varchar(255),
+    realm_name varchar(255),
+    created bigint not null,
+    comment varchar(255),
+    adm_login varchar (255) not null,
+    enabled boolean,
+    sent_to_OS boolean
+    )
