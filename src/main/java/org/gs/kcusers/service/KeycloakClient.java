@@ -5,7 +5,9 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.gs.kcusers.configs.ProtectedUsers;
+import org.gs.kcusers.domain.Event;
 import org.gs.kcusers.domain.User;
+import org.gs.kcusers.repositories.EventRepository;
 import org.gs.kcusers.repositories.UserRepository;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -22,6 +24,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +37,8 @@ public class KeycloakClient {
     ProtectedUsers protectedUsers;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private EventRepository eventRepository;
     @Value("${service.keycloakclient.realms}")
     private String KEYCLOAK_REALMS;
 
@@ -180,6 +185,11 @@ public class KeycloakClient {
 
                 user.setEnabled(ourSavedUser.getEnabled());
                 user.setCreated(ourSavedUser.getCreated());
+            }else {
+                userRepository.save(user);// add new user
+                eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
+                        "system", "add user from Keycloack",user.getEnabled(), false));
+
             }
 
             // фильтруем недавно созданных пользователей (текущая дата - настройка inactivity.days)
@@ -196,9 +206,10 @@ public class KeycloakClient {
             //user.setCommentEnabledBy("service automatically");
             //userRepository.save(user);
             //} else
-            else if (ourSavedUser == null) {
-                userRepository.save(user); // add new user
-            }
+//            else if (ourSavedUser == null) {
+//                userRepository.save(user); // add new user
+//
+//            }
 
             if (disable) {
                 if (!KEYCLOAK_DRY_RUN) {
@@ -218,6 +229,8 @@ public class KeycloakClient {
         userRepresentation.setEnabled(user.getEnabled());
         userResource.update(userRepresentation);
         userRepository.save(user);
+        eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(), "system",
+                user.getComment(),user.getEnabled(), false));
     }
 
     private void disableUser(Keycloak keycloak, User user) {
