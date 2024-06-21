@@ -5,23 +5,23 @@
     <meta charset="UTF-8"/>
 </head>
 <body>
-<div th:fragment="pager" class="sticky-bottom">
+<div th:fragment="pager(link)" class="sticky-bottom">
     <div class="hstack">
         <div class="p-2">
             <nav th:if="${page.getTotalPages() > 1}">
                 <ul class="pagination">
                     <li class="page-item">
                         <a th:class="${page.getNumber() == 0 ? 'page-link disabled' : 'page-link'}"
-                           th:href="'/?page='+${page.getNumber()-1}+'&size='+${page.getSize()}">Previous</a>
+                           th:href="${link}+'?page='+${page.getNumber()-1}+'&size='+${page.getSize()}">Previous</a>
                     </li>
                     <li th:class="${number == page.getNumber() ? 'page-item active' : 'page-item'}"
                         th:each="number : ${#numbers.sequence(0, page.getTotalPages()-1) }">
-                        <a class="page-link" th:href="'/?page='+${number}+'&size='+${page.getSize()}"
+                        <a class="page-link" th:href="${link}+'?page='+${number}+'&size='+${page.getSize()}"
                            th:text="${number+1}"></a>
                     </li>
                     <li class="page-item">
                         <a th:class="${page.getNumber() == page.getTotalPages()-1 ? 'page-link disabled' : 'page-link'}"
-                           th:href="'/?page='+${page.getNumber()+1}+'&size='+${page.getSize()}">Next</a>
+                           th:href="${link}+'?page='+${page.getNumber()+1}+'&size='+${page.getSize()}">Next</a>
                     </li>
                 </ul>
             </nav>
@@ -31,7 +31,7 @@
                 <ul class="pagination">
                     <li th:class="${count == page.getSize() ? 'page-item active' : 'page-item'}"
                         th:each="count : ${#numbers.sequence(10, 30, 10) }">
-                        <a class="page-link" th:href="'/?size='+${count}" th:text="${count}"></a>
+                        <a class="page-link" th:href="${link}+'?size='+${count}" th:text="${count}"></a>
                     </li>
                 </ul>
             </nav>

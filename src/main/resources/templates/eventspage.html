@@ -24,13 +24,14 @@
 
         </div>
     </nav>
-    <div th:if="${page.getContent().isEmpty()}" class="container text-center h3" th:text="#{front.eventpage.noeventsfound}"></div>
+    <div th:if="${page.getContent().isEmpty()}" class="container text-center h3"
+         th:text="#{front.eventpage.noeventsfound}"></div>
     <div th:unless="${page.getContent().isEmpty()}">
         <table class="table table-hover">
             <thead>
             <tr class="table-primary unselectable">
-<!--                <th scope="col" th:text="#{front.eventspage.table.header.user}"></th>-->
-<!--                <th scope="col" th:text="#{front.eventspage.table.header.realm}"></th>-->
+                <!--                <th scope="col" th:text="#{front.eventspage.table.header.user}"></th>-->
+                <!--                <th scope="col" th:text="#{front.eventspage.table.header.realm}"></th>-->
                 <th scope="col" th:text="#{front.eventspage.table.header.created}"></th>
                 <th scope="col" th:text="#{front.eventspage.table.header.comment}"></th>
                 <th scope="col" th:text="#{front.eventspage.table.header.admin}"></th>
@@ -44,8 +45,8 @@
                     th:each="event : ${page.getContent()}"
                     th:id="${event.getCreated()}"
             >
-<!--                <th><span th:text="${event.getUserName()}"></span></th>-->
-<!--                <td><span th:text="${event.getRealmName()}"></span></td>-->
+                <!--                <th><span th:text="${event.getUserName()}"></span></th>-->
+                <!--                <td><span th:text="${event.getRealmName()}"></span></td>-->
                 <td><span th:text="${#dates.format(event.getCreated())}"></span></td>
 
                 <td><span th:text="${event.getComment()}"></span></td>
@@ -66,7 +67,7 @@
 
             </tbody>
         </table>
-        <!--        <div th:insert="~{pager.html :: pager}"></div>-->
+        <div th:insert="~{pager.html :: pager('/events/'+${realmName+'/'+userName})}"></div>
     </div>
     <div class="mb-2 row">
         <div class="text-center">
