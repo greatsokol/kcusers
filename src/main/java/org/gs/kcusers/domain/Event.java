@@ -30,7 +30,7 @@ public class Event {
     String comment;
 
     Boolean enabled;
-    Boolean sent_to_OS;
+    Boolean sentToOs;
 
     public Event() {}
 

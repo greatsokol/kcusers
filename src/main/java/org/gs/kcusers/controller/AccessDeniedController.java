@@ -5,15 +5,15 @@
 package org.gs.kcusers.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Map;
 
 @Controller
 @RequestMapping("/access-denied")
 public class AccessDeniedController extends CommonController {
-    @GetMapping
+    @RequestMapping(method = {RequestMethod.POST, RequestMethod.PUT})
     public String accessDenied(Map<String, Object> model) {
         model.put("authorizedusername", getAuthorizedUserName());
         model.put("authorities", grantedAuthoritiesListAsString());

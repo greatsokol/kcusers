@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
@@ -30,9 +30,7 @@
                th:text="#{front.mainpage.button.logout} + ' ' + ${authorizedusername}"></a>
         </div>
     </nav>
-    <div th:if="${page.getContent().isEmpty()}" class="text-center h3">
-        No users found
-    </div>
+    <div th:if="${page.getContent().isEmpty()}" class="text-center h3" th:text="#{front.mainpage.nousersfound}"></div>
     <div th:unless="${page.getContent().isEmpty()}">
         <table class="table table-hover">
             <thead>

@@ -24,4 +24,4 @@ create table kcusers.events
     adm_login varchar (255) not null,
     enabled boolean,
     sent_to_OS boolean
-    )
+    );
