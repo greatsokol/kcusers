@@ -222,14 +222,14 @@ public class KeycloakClient {
     }
 
 
-    private void updateUser(Keycloak keycloak, User user) {
+    private void updateUser(Keycloak keycloak, User user, String admLogin) {
         UsersResource usersResource = keycloak.realm(user.getRealmName()).users();
         UserResource userResource = usersResource.get(user.getUserId());
         UserRepresentation userRepresentation = userResource.toRepresentation();
         userRepresentation.setEnabled(user.getEnabled());
         userResource.update(userRepresentation);
         userRepository.save(user);
-        eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(), "system",
+        eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(), admLogin,
                 user.getComment(),user.getEnabled(), false));
     }
 
@@ -237,13 +237,13 @@ public class KeycloakClient {
         user.setEnabled(false);
         user.setManuallyEnabledTime(null);
         user.setCommentDisabledForInactivity();
-        updateUser(keycloak, user);
+        updateUser(keycloak, user, "system");
         logger.info("Successfully DISABLED user {} ({})", user.getUserName(), user.getRealmName());
     }
 
-    public void updateUserFromController(User user) {
+    public void updateUserFromController(User user, String admLogin) {
         try (Keycloak keycloak = buildKeyclak()) {
-            updateUser(keycloak, user);
+            updateUser(keycloak, user, admLogin);
         }
     }
 }

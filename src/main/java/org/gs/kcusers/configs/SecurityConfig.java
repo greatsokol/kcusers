@@ -1,5 +1,7 @@
 package org.gs.kcusers.configs;
 
+import org.gs.kcusers.domain.Login;
+import org.gs.kcusers.repositories.LoginRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,9 @@ public class SecurityConfig {
     @Autowired
     ClientRegistrationRepository clientRegistrationRepository;
 
+    @Autowired
+    LoginRepository loginRepository;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
@@ -58,6 +63,8 @@ public class SecurityConfig {
             DefaultOidcUser principal = (DefaultOidcUser) authentication.getPrincipal();
             logger.info("Authentication success {} ({})",
                     principal.getPreferredUsername(), authentication.getAuthorities());
+            loginRepository.save(new Login(principal.getPreferredUsername(),
+                    principal.getAuthenticatedAt().getEpochSecond()));
             response.sendRedirect("/");
         };
     }
