@@ -25,3 +25,12 @@ create table kcusers.events
     enabled boolean,
     sent_to_OS boolean
     );
+
+drop table kcusers.logins
+
+create table kcusers.logins
+    (
+    user_name varchar(255),
+    auth_time bigint
+    )
+
