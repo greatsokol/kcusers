@@ -29,6 +29,8 @@
 
             <a aria-current="page" class="btn btn-outline-info" href="/logout"
                th:text="#{front.mainpage.button.logout} + ' ' + ${authorizedusername}"></a>
+            <a aria-current="page" class="btn btn-outline-info" th:href="'/logins/'+${authorizedusername}"
+               th:text="#{front.mainpage.button.logins}"></a>
         </div>
     </nav>
     <div th:if="${page.getContent().isEmpty()}" class="text-center h3" th:text="#{front.mainpage.nousersfound}"></div>

@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -63,8 +64,12 @@ public class SecurityConfig {
             DefaultOidcUser principal = (DefaultOidcUser) authentication.getPrincipal();
             logger.info("Authentication success {} ({})",
                     principal.getPreferredUsername(), authentication.getAuthorities());
-            loginRepository.save(new Login(principal.getPreferredUsername(),
-                    principal.getAuthenticatedAt().getEpochSecond()));
+            loginRepository.save(new Login(
+                    principal.getPreferredUsername(),
+                    principal.getAuthenticatedAt().toEpochMilli(),
+                    ((WebAuthenticationDetails) authentication.getDetails()).getRemoteAddress(),
+                    false)
+            );
             response.sendRedirect("/");
         };
     }

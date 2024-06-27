@@ -29,7 +29,7 @@
             </nav>
         </div>
         <div class="p-2 ms-auto">
-            <nav>
+            <nav th:if="${page.getTotalElements() > 10}">
                 <ul class="pagination">
                     <li th:class="${count == page.getSize() ? 'page-item active' : 'page-item'}"
                         th:each="count : ${#numbers.sequence(10, 30, 10) }">

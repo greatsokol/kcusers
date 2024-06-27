@@ -3,8 +3,8 @@ create schema kcusers;
 drop table kcusers.users;
 
 create table kcusers.users
-    (user_name varchar(255),
-    realm_name varchar(255),
+    (user_name varchar(255) not null,
+    realm_name varchar(255) not null,
     user_id varchar(255) not null,
     created bigint not null,
     last_login bigint,
@@ -17,8 +17,8 @@ drop table kcusers.events;
 
 create table kcusers.events
     (
-    user_name varchar(255),
-    realm_name varchar(255),
+    user_name varchar(255) not null,
+    realm_name varchar(255) not null,
     created bigint not null,
     comment varchar(255),
     adm_login varchar (255) not null,
@@ -26,11 +26,13 @@ create table kcusers.events
     sent_to_OS boolean
     );
 
-drop table kcusers.logins
+drop table kcusers.logins;
 
 create table kcusers.logins
     (
-    user_name varchar(255),
-    auth_time bigint
-    )
+    user_name varchar(255) not null,
+    auth_time bigint not null,
+    remote_address varchar(255),
+    sent_to_OS boolean
+    );
 

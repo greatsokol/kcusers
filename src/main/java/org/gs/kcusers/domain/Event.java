@@ -53,7 +53,7 @@ public class Event {
 
         @Override
         public int hashCode() {
-            return Objects.hash(userName, realmName);
+            return Objects.hash(userName, realmName, created);
         }
     }
 

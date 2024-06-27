@@ -22,6 +22,10 @@ public class Login {
     @Id
     Long authTime;
 
+    String remoteAddress;
+
+    Boolean sentToOs;
+
     public Login()
     {}
 
@@ -37,12 +41,13 @@ public class Login {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Login.LoginPK loginPK = (Login.LoginPK) o;
-            return Objects.equals(userName, loginPK.userName) && Objects.equals(authTime, loginPK.authTime);
+            return Objects.equals(userName, loginPK.userName) &&
+                    Objects.equals(authTime, loginPK.authTime);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(userName);
+            return Objects.hash(userName, authTime);
         }
     }
 
