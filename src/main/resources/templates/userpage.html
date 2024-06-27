@@ -84,13 +84,14 @@
             <div class="text-center h1">
                 <input class="form-check-input" id="enbl" name="enabled"
                        th:checked="${user.getEnabled()}"
+                       th:disabled="${isAdmin==false}"
                        type="checkbox">
                 <label class="form-check-label" for="enbl" th:text="#{front.userpage.check.enabled}"></label>
             </div>
         </div>
         <div class="mb-2 row">
             <div class="text-center">
-                <button class="btn btn-outline-danger" type="submit" th:text="#{front.userpage.button.save}"></button>
+                <button th:if="${isAdmin}" class="btn btn-outline-danger" type="submit" th:text="#{front.userpage.button.save}"></button>
                 <a aria-current="page" class="btn btn-outline-success" href="/"
                    th:text="#{front.userpage.button.back}"></a>
             </div>

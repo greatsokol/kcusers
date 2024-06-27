@@ -27,6 +27,7 @@ public class UserContoller extends CommonController {
     public String userPage(@PathVariable String realmName, @PathVariable String userName, Map<String, Object> model) {
         var user = userRepository.findByUserNameAndRealmName(userName, realmName);
         model.put("user", user);
+        model.put("isAdmin", adminRolesGranted());
         model.put("authorizedusername", getAuthorizedUserName());
         return "userpage";
     }
