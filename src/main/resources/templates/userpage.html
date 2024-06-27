@@ -84,18 +84,20 @@
             <div class="text-center h1">
                 <input class="form-check-input" id="enbl" name="enabled"
                        th:checked="${user.getEnabled()}"
+                       th:disabled="${isAdmin==false}"
                        type="checkbox">
                 <label class="form-check-label" for="enbl" th:text="#{front.userpage.check.enabled}"></label>
             </div>
         </div>
         <div class="mb-2 row">
             <div class="text-center">
-                <button class="btn btn-outline-danger" type="submit" th:text="#{front.userpage.button.save}"></button>
-                <a aria-current="page" class="btn btn-outline-success" href="/"
+                <a aria-current="page" class="btn btn-outline-danger" onclick="httpPost()" th:if="${isAdmin==true}"
+                   th:text="#{front.userpage.button.save}"></a>
+                <a aria-current="page" class="btn btn-outline-success" onclick="history.back()"
                    th:text="#{front.userpage.button.back}"></a>
             </div>
         </div>
-        <input name="_csrf" th:value="${_csrf.getToken()}" type="hidden">
+        <input id="_csrf" name="_csrf" th:value="${_csrf.getToken()}" type="hidden">
     </form>
 </div>
 <script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>

@@ -51,16 +51,28 @@ public class User {
         return " (" + formattedDate + ")";
     }
 
+    public boolean userIsOldAndInactive() {
+        return userIsOld() && userIsInactive();
+    }
+
     public boolean userShouldBeBlocked() {
-        return userIsOld() && userIsInactive() && userIsNotInImmunityPeriod();
+        return userIsOldAndInactive() && userIsNotInImmunityPeriod();
+    }
+
+    public boolean userShouldBeUnblocked() {
+        return !userIsInactive() && !userIsNotInImmunityPeriod();
     }
 
     public void setCommentDisabledForInactivity() {
         setComment("Disabled due to inactivity for " + Configurations.INACTIVITY_DAYS + " days" + addNow());
     }
 
-    public void setCommentEnabledTemporarily() {
-        setComment("Enabled for " + Configurations.IMMUNITY_PERIOD_MINUTES + " minutes" + addNow());
+    public void setCommentEnabledAfterBecomeActive() {
+        setComment("Enabled due to become active");
+    }
+
+    public void setCommentEnabledTemporarily(String adminUserName) {
+        setComment("Enabled by " + adminUserName + " for " + Configurations.IMMUNITY_PERIOD_MINUTES + " minutes" + addNow());
     }
 
     public void setCommentDisabledBy(String adminUserName) {
@@ -118,23 +130,19 @@ public class User {
     }
 
     public void setUserStatusFromController(boolean enabled, String adminName) {
-        boolean userShouldBeBlocked = userShouldBeBlocked();
-        boolean enableTemporarily = !getEnabled() && userShouldBeBlocked;
+        boolean userShouldBeBlocked = userIsOldAndInactive();
+        boolean enableTemporarily = enabled && userShouldBeBlocked;
         setEnabled(enabled);
         if (enabled) {
             if (enableTemporarily) {
-                setCommentEnabledTemporarily();
+                setCommentEnabledTemporarily(adminName);
                 setManuallyEnabledTime(Instant.now().toEpochMilli());
             } else {
                 setCommentEnabledBy(adminName);
                 setManuallyEnabledTime(null);
             }
         } else {
-            if (userShouldBeBlocked) {
-                setCommentDisabledForInactivity();
-            } else {
-                setCommentDisabledBy(adminName);
-            }
+            setCommentDisabledBy(adminName);
             setManuallyEnabledTime(null);
         }
     }
