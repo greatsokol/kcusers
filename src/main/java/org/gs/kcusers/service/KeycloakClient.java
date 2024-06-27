@@ -185,10 +185,10 @@ public class KeycloakClient {
 
                 user.setEnabled(ourSavedUser.getEnabled());
                 user.setCreated(ourSavedUser.getCreated());
-            }else {
+            } else {
                 userRepository.save(user);// add new user
                 eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
-                        "system", "add user from Keycloack",user.getEnabled(), false));
+                        "system", "add user from Keycloack", user.getEnabled(), false));
 
             }
 
@@ -200,6 +200,12 @@ public class KeycloakClient {
                 user.setEnabled(false);
                 logger.info("User {} ({}) become inactive. Will be DISABLED.", user.getUserName(), user.getRealmName());
                 disable = true;
+            } else if (user.getEnabled() && user.userShouldBeUnblocked()) {
+                user.setManuallyEnabledTime(null);
+                user.setCommentEnabledAfterBecomeActive();
+                userRepository.save(user);
+                eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
+                        "system", user.getComment(), user.getEnabled(), false));
             } //else if (!user.getEnabled() && !shouldBeBlocked) {
             //user.setEnabled(true);
             //user.setManuallyEnabledTime(null);
@@ -230,7 +236,7 @@ public class KeycloakClient {
         userResource.update(userRepresentation);
         userRepository.save(user);
         eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(), admLogin,
-                user.getComment(),user.getEnabled(), false));
+                user.getComment(), user.getEnabled(), false));
     }
 
     private void disableUser(Keycloak keycloak, User user) {

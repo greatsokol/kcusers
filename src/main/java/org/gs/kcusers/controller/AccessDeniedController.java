@@ -13,7 +13,7 @@ import java.util.Map;
 @Controller
 @RequestMapping("/access-denied")
 public class AccessDeniedController extends CommonController {
-    @RequestMapping(method = {RequestMethod.POST, RequestMethod.PUT})
+    @RequestMapping(method = {RequestMethod.POST, RequestMethod.PUT, RequestMethod.GET})
     public String accessDenied(Map<String, Object> model) {
         model.put("authorizedusername", getAuthorizedUserName());
         model.put("authorities", grantedAuthoritiesListAsString());

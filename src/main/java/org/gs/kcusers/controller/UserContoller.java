@@ -22,13 +22,17 @@ public class UserContoller extends CommonController {
         this.keycloakClient = keycloakClient;
     }
 
-    @PreAuthorize("hasAnyAuthority(@getUserRoles)")
-    @GetMapping(path = "/{realmName}/{userName}")
-    public String userPage(@PathVariable String realmName, @PathVariable String userName, Map<String, Object> model) {
-        var user = userRepository.findByUserNameAndRealmName(userName, realmName);
+    private void fillModel(Map<String, Object> model, User user){
         model.put("user", user);
         model.put("isAdmin", adminRolesGranted());
         model.put("authorizedusername", getAuthorizedUserName());
+    }
+
+    @PreAuthorize("hasAnyAuthority(@getUserRoles)")
+    @GetMapping(path = "/{realmName}/{userName}")
+    public String userPage(@PathVariable String realmName, @PathVariable String userName, Map<String, Object> model) {
+        User user = userRepository.findByUserNameAndRealmName(userName, realmName);
+        fillModel(model, user);
         return "userpage";
     }
 
@@ -42,8 +46,7 @@ public class UserContoller extends CommonController {
         boolean wantedEnabled = formData.getFirst("enabled") != null;
         user.setUserStatusFromController(wantedEnabled, getAuthorizedUserName());
         keycloakClient.updateUserFromController(user, getAuthorizedUserName());
-        model.put("user", user);
-        model.put("authorizedusername", getAuthorizedUserName());
+        fillModel(model, user);
 
         return "userpage";
     }
