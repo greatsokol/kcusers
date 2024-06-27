@@ -1,5 +1,7 @@
 package org.gs.kcusers.controller;
 
+import org.gs.kcusers.repositories.EventRepository;
+import org.gs.kcusers.repositories.LoginRepository;
 import org.gs.kcusers.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +18,12 @@ import java.util.stream.Stream;
 public class CommonController {
     @Autowired
     protected UserRepository userRepository;
+
+    @Autowired
+    protected EventRepository eventRepository;
+
+    @Autowired
+    protected LoginRepository loginRepository;
 
     @Value("${front.adminroles}")
     protected String adminRoles;
