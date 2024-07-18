@@ -1,0 +1,15 @@
+[Unit]
+Description=Keycloak users blocking due to inactivity service
+[Service]
+Type=simple
+WorkingDirectory=/opt/kcusers/bin
+ExecStart=/opt/kcusers/bin/start
+ExecReload=/bin/kill -s HUP
+TimeoutStartSec=0
+KillMode=process
+Environment=GIO_MIN_MEM=512m
+Environment=GIO_MAX_MEM=512m
+User=kcusers
+Group=kcusers
+[Install]
+WantedBy=multi-user.target

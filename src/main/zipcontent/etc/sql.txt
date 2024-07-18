@@ -1,0 +1,41 @@
+create schema kcusers;
+
+drop table kcusers.users;
+
+create table kcusers.users
+    (
+    user_name varchar(255) not null,
+    realm_name varchar(255) not null,
+    user_id varchar(255) not null,
+    created bigint not null,
+    last_login bigint,
+    enabled boolean not null,
+    manually_enabled_time bigint,
+    comment varchar(255),
+    primary key (user_name, realm_name)
+    );
+
+drop table kcusers.events;
+
+create table kcusers.events
+    (
+    user_name varchar(255) not null,
+    realm_name varchar(255) not null,
+    created bigint not null,
+    comment varchar(255),
+    adm_login varchar (255) not null,
+    enabled boolean,
+    primary key (user_name, realm_name, created)
+    );
+
+drop table kcusers.logins;
+
+create table kcusers.logins
+    (
+    user_name varchar(255) not null,
+    auth_time bigint not null,
+    session varchar(255),
+    address varchar(255),
+    primary key (user_name, auth_time)
+    );
+

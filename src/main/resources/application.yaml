@@ -1,0 +1,68 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${front.issuer-uri}
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${front.issuer-uri}
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: ${front.client-id}
+            client-secret: ${front.client-secret}
+            scope: openid
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${db.url}
+    username: ${db.username}
+    password: ${db.password}
+
+#-----------------------------------------------------------------------------
+server:
+  port: 9000
+  ssl:
+    certificate: "classpath:any.local.crt"
+    certificate-private-key: "classpath:any.local.key"
+
+
+#-----------------------------------------------------------------------------
+db:
+  url: jdbc:postgresql://localhost:5433/postgres?currentSchema=kcusers
+  username: postgres
+  password: ${pgpwd:admin}
+
+#-----------------------------------------------------------------------------
+front:
+  issuer-uri: https://keycloak.local/realms/master
+  client-id: servlet_client
+  client-secret: ${clsec:CIs66oQuBCUh9aPPPk7sGnLLR4sVRb6b}
+  userroles: user
+  adminroles: admin
+
+#-----------------------------------------------------------------------------
+service:
+  cron: 00 * * * * *
+  keycloakclient:
+    realms: master,APIM,FINSTAR
+    url: https://keycloak.local
+    client: admin-cli
+    admin:
+      realm: master
+      login: admin
+      password: ${kсpwd:admin}
+    inactivity:
+      protectedusers:
+        - admin
+        - yetanotheradmin
+      days: 1
+      immunityperiodminutes: 5
+      dryrun: false

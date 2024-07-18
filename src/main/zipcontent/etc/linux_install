@@ -1,0 +1,26 @@
+#!/bin/sh
+sudo useradd kcusers
+sudo passwd kcusers
+
+sudo mkdir -p /opt/kcusers
+
+#copy zip and unzip to /opt/kcusers/
+cd /opt/kcusers
+sudo unzip kcusers-0.0.1-SNAPSHOT.zip
+
+#copy kcusers.service to /etc/systemd/system/
+
+
+# change owner
+sudo chown -R kcusers:kcusers /opt/kcusers/
+sudo chown kcusers:kcusers /etc/systemd/system/kcusers.service
+
+
+#launch service
+sudo systemctl daemon-reload
+sudo systemctl enable kcusers
+sudo systemctl start kcusers
+sudo systemctl status kcusers
+
+#check logs
+tail -f /opt/kcusers/logs/app.log

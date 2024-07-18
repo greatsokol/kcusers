@@ -1,0 +1,170 @@
+#!/bin/sh
+
+DIRNAME=`dirname $0`
+PROGNAME=`basename $0`
+
+clsec='CIs66oQuBCUh9aPPPk7sGnLLR4sVRb6b'
+pglpwd='admin'
+kсpwd='admin'
+
+export clsec
+export pglpwd
+export kсpwd
+
+# OS specific support (must be 'true' or 'false').
+cygwin=false;
+darwin=false;
+linux=false;
+case "`uname`" in
+    CYGWIN*)
+        cygwin=true
+        ;;
+
+    Darwin*)
+        darwin=true
+        ;;
+
+    Linux)
+        linux=true
+        ;;
+esac
+
+# Force IPv4 on Linux systems since IPv6 doesn't work correctly with jdk5 and lower
+if [ "$linux" = "true" ]; then
+   JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"
+fi
+
+# Setup KCUSERS_APP_HOME
+if [ "x$KCUSERS_APP_HOME" = "x" ]; then
+    # get the full path (without any relative bits)
+    KCUSERS_APP_HOME=`cd $DIRNAME/..; pwd -P`
+fi
+
+
+export KCUSERS_APP_HOME
+
+# Move to the context home
+cd $KCUSERS_APP_HOME
+
+# Searching for configuration
+APP_OPTS="-Dlogging.config=$KCUSERS_APP_HOME/config/logback.xml -Dspring.config.location=$KCUSERS_APP_HOME/config/application.yaml"
+
+export JAVA_OPTS
+
+# Setup the JVM
+if [ "x$JAVA" = "x" ]; then
+    if [ "x$JAVA_HOME" != "x" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+    else
+    JAVA="java"
+    fi
+fi
+
+# Setup the classpath
+runjar=`find $KCUSERS_APP_HOME -name "kcusers-*.jar"`
+if [ ! -f "$runjar" ]; then
+    die "Missing required file: $runjar"
+fi
+APP_BOOT_CLASSPATH="$runjar"
+
+if [ "x$GIO_MIN_MEM" = "x" ]; then
+    GIO_MIN_MEM=256m
+fi
+if [ "x$GIO_MAX_MEM" = "x" ]; then
+    GIO_MAX_MEM=256m
+fi
+
+# min and max heap sizes should be set to the same value to avoid
+# stop-the-world GC pauses during resize
+JAVA_OPTS="$JAVA_OPTS -Xms${GIO_MIN_MEM}"
+JAVA_OPTS="$JAVA_OPTS -Xmx${GIO_MAX_MEM}"
+
+# set to headless, just in case
+JAVA_OPTS="$JAVA_OPTS -Djava.awt.headless=true"
+
+# Force the JVM to use IPv4 stack
+if [ "x$GIO_USE_IPV4" != "x" ]; then
+  JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"
+fi
+
+# Causes the JVM to dump its heap on OutOfMemory.
+JAVA_OPTS="$JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError"
+# The path to the heap dump location, note directory must exists and have enough
+# space for a full heap dump.
+#JAVA_OPTS="$JAVA_OPTS -XX:HeapDumpPath=$KCUSERS_APP_HOME/logs/heapdump.hprof"
+
+# Disables explicit GC
+JAVA_OPTS="$JAVA_OPTS -XX:+DisableExplicitGC"
+
+# Ensure UTF-8 encoding by default (e.g. filenames)
+JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8"
+
+# Convert paths for Java on Windows.
+if $cygwin; then
+    APP_BOOT_CLASSPATH=$(cygpath -w $APP_BOOT_CLASSPATH)
+    KCUSERS_APP_HOME=$(cygpath -w $KCUSERS_APP_HOME)
+fi
+
+# Display our environment
+echo "========================================================================="
+echo ""
+echo "  KCUSERS_APP_HOME: $KCUSERS_APP_HOME"
+echo ""
+echo "  APP_OPTS: $APP_OPTS"
+echo ""
+echo "  JAVA: $JAVA"
+echo ""
+echo "  JAVA_OPTS: $JAVA_OPTS"
+echo ""
+echo "  CLASSPATH: $APP_BOOT_CLASSPATH"
+echo ""
+echo "========================================================================="
+echo ""
+
+# Execute the JVM in the foreground
+daemon=`echo $* | egrep -- '(^-d |-d$| -d |--daemon$|--daemon )'`
+if [ -z "$daemon" ] ; then
+	exec "$JAVA" $JAVA_OPTS \
+        -Dvertx.disableFileCaching=true \
+        -Dvertx.disableFileCPResolving=true \
+        -Dvertx.disableContextTiming=true \
+        -cp "$APP_BOOT_CLASSPATH" \
+        $APP_OPTS \
+        org.gs.kcusers.KCUsersApplication \
+        "$@"
+else
+	while [ $# -gt 0 ]; do
+		case "$1" in
+    		-p=*)
+      			pid_file="${1#*=}"
+      			;;
+  		esac
+  		shift
+	done
+
+	if [ -z "$pid_file" ] ; then
+		pid_file=/var/run/KCUsersApplication.pid
+	fi
+
+	exec "$JAVA" $JAVA_OPTS \
+        -Dvertx.disableFileCaching=true \
+        -Dvertx.disableFileCPResolving=true \
+        -Dvertx.disableContextTiming=true \
+        -cp "$APP_BOOT_CLASSPATH" \
+        $APP_OPTS \
+        org.gs.kcusers.KCUsersApplication \
+        "$@" <&- &
+
+    retval=$?
+    pid=$!
+
+    [ $retval -eq 0 ] || exit $retval
+    if ! ps -p $pid > /dev/null ; then
+        exit 1
+    fi
+
+    echo $pid > $pid_file
+    exit 0
+fi
+
+exit $?

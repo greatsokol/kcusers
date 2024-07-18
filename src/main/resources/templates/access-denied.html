@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/bootstrap/bootstrap.min.css}">
+    <title>Access denied</title>
+</head>
+<body>
+<div class="container align-content-center">
+    <h1 class="mt-5 fw-bold" th:text="#{front.accessdeniedpage.accessdenied}"></h1>
+    <h2 class="mt-5" th:text="#{front.accessdeniedpage.authoritiesgrantedto}+' '+${authorizedusername}+':'"></h2>
+    <h3 class="m-5" th:text="${authorities}"></h3>
+
+    <div th:unless="${userrolesgranted}">
+        <h2 th:text="#{front.accessdeniedpage.requireduserroles}"></h2>
+        <h3 class="m-5" th:text="'' + ${userroles}"></h3>
+    </div>
+    <div th:unless="${adminrolesgranted}">
+        <h2 th:text="#{front.accessdeniedpage.requiredadminroles}"></h2>
+        <h3 class="m-5" th:text="'' + ${adminroles}"></h3>
+    </div>
+
+    <a aria-current="page" class="btn btn-outline-success" onclick="history.back()" th:text="#{front.accessdeniedpage.button.back}"></a>
+    <a aria-current="page" class="btn btn-outline-info" href="/logout"
+       th:text="#{front.accessdeniedpage.button.logout}+' ' + ${authorizedusername}"></a>
+</div>
+
+<script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

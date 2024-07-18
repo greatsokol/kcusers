@@ -1,0 +1,64 @@
+<!--
+  ~ Created by Eugene Sokolov 27.06.2024, 10:27.
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/bootstrap/bootstrap.min.css}">
+    <title>KC User auth history</title>
+</head>
+<body onload="timedRefresh(60000);">
+<div class="container">
+    <div class="container">
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-fluid">
+                <span class="navbar-brand unselectable fw-bold"
+                      th:text="#{front.loginspage.navbar.title} +' '+${authorizedusername}"></span>
+                <div class="navbar-collapse"></div>
+                <a aria-current="page" class="btn btn-outline-info" href="/logout"
+                   th:text="#{front.mainpage.button.logout} + ' ' + ${authorizedusername}"></a>
+            </div>
+        </nav>
+        <div class="text-center h3" th:if="${page.getContent().isEmpty()}"
+             th:text="#{front.loginspage.noeventsfound}"></div>
+        <div th:unless="${page.getContent().isEmpty()}">
+            <table class="table table-hover">
+                <thead>
+                <tr class="table-primary unselectable sticky-top">
+                    <th scope="col" th:text="#{front.loginspage.table.header.user}"></th>
+                    <th scope="col" th:text="#{front.loginspage.table.header.lastlogin}"></th>
+                    <th scope="col" th:text="#{front.loginspage.table.header.session}"></th>
+                    <th scope="col" th:text="#{front.loginspage.table.header.address}"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr
+                        class="table-success"
+                        th:each="login : ${page.getContent()}"
+                        th:id="${login.getAuthTime()}"
+                >
+                    <th><span th:text="${login.getUserName()}"/></th>
+                    <td><span th:text="${#dates.format(login.getAuthTime())}"/></td>
+                    <th><span th:text="${login.getSession()}"/></th>
+                    <th><span th:text="${login.getAddress()}"/></th>
+                </tr>
+
+                </tbody>
+            </table>
+            <div class="sticky-bottom" th:insert="~{pager.html :: pager('/logins/'+${authorizedusername})}"></div>
+        </div>
+        <div class="mb-2 row">
+            <div class="text-center">
+                <a aria-current="page" class="btn btn-outline-success" href="/"
+                   th:text="#{front.userpage.button.back}"></a>
+            </div>
+        </div>
+    </div>
+    <script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
+    <script crossorigin="anonymous" th:src="@{/script/script.js}"></script>
+</div>
+</body>
+</html>

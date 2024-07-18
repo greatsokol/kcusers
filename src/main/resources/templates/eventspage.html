@@ -1,0 +1,78 @@
+<!--
+  ~ Created by Eugene Sokolov 21.06.2024, 13:18.
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/bootstrap/bootstrap.min.css}">
+    <title>KC User events</title>
+</head>
+<body onload="timedRefresh(60000);">
+<div class="container">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <span class="navbar-brand unselectable fw-bold"
+                  th:text="#{front.eventpage.navbar.for} + ' ' + ${userName + ' ('+realmName+')'}"></span>
+
+            <div class="navbar-collapse"></div>
+
+            <a aria-current="page" class="btn btn-outline-info" href="/logout"
+               th:text="#{front.userpage.button.logout}+' ' + ${authorizedusername}"></a>
+
+        </div>
+    </nav>
+    <div class="container text-center h3" th:if="${page.getContent().isEmpty()}"
+         th:text="#{front.eventpage.noeventsfound}"></div>
+    <div th:unless="${page.getContent().isEmpty()}">
+        <table class="table table-hover">
+            <thead>
+            <tr class="table-primary unselectable sticky-top">
+                <!--                <th scope="col" th:text="#{front.eventspage.table.header.user}"></th>-->
+                <!--                <th scope="col" th:text="#{front.eventspage.table.header.realm}"></th>-->
+                <th scope="col" th:text="#{front.eventspage.table.header.created}"></th>
+                <th scope="col" th:text="#{front.eventspage.table.header.comment}"></th>
+                <th scope="col" th:text="#{front.eventspage.table.header.admin}"></th>
+                <th scope="col" th:text="#{front.eventspage.table.header.status}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr
+                    th:class="${event.getEnabled() ? 'table-success' : 'table-danger'}"
+                    th:each="event : ${page.getContent()}"
+                    th:id="${event.getCreated()}"
+            >
+                <!--                <th><span th:text="${event.getUserName()}"></span></th>-->
+                <!--                <td><span th:text="${event.getRealmName()}"></span></td>-->
+                <td><span th:text="${#dates.format(event.getCreated())}"></span></td>
+
+                <td><span th:text="${event.getComment()}"></span></td>
+                <td><span th:text="${event.getAdmLogin()}"></span></td>
+                <td>
+                    <span class="badge text-bg-success" th:if="${event.getEnabled()}"
+                          th:text="#{front.status.enabled}"></span>
+                    <span class="badge text-bg-danger" th:text="#{front.status.disabled}"
+                          th:unless="${event.getEnabled()}"></span>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+        <div class="sticky-bottom" th:insert="~{pager.html :: pager('/events/'+${realmName+'/'+userName})}"></div>
+    </div>
+    <div class="mb-2 row">
+        <div class="text-center">
+            <a aria-current="page" class="btn btn-outline-success"
+               onclick="history.go(-2)"
+               th:text="#{front.eventspage.button.back}"></a>
+        </div>
+        <!-- th:href="'/user/'+${realmName}+'/'+${userName}" -->
+    </div>
+
+</div>
+<script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
+<script crossorigin="anonymous" th:src="@{/script/script.js}"></script>
+</body>
+</html>
