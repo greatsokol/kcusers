@@ -10,7 +10,7 @@ function httpPost() {
     let realm = document.getElementById("realmName").value;
     let user = document.getElementById('userName').value;
     let csrf = document.getElementById("_csrf").value;
-    let enabled = document.getElementById("enbl").value;
+    let enabled = document.getElementById("enbl").checked;
     let body = "enabled="+enabled+"&_csrf="+csrf;
 
     req = new XMLHttpRequest();

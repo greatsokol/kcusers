@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import org.gs.kcusers.configs.Configurations;
+import org.gs.kcusers.configs.LocalizedMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,23 +65,27 @@ public class User {
     }
 
     public void setCommentDisabledForInactivity() {
-        setComment("Disabled due to inactivity for " + Configurations.INACTIVITY_DAYS + " days" + addNow());
+        setComment(LocalizedMessages.getMessage("backend.user.disabledduetoinactivity",
+                new Object[]{ Configurations.INACTIVITY_DAYS, addNow() }));
     }
 
     public void setCommentEnabledAfterBecomeActive() {
-        setComment("Enabled due to become active");
+        setComment(LocalizedMessages.getMessage("backend.user.enabledbecomeactive"));
     }
 
     public void setCommentEnabledTemporarily(String adminUserName) {
-        setComment("Enabled by " + adminUserName + " for " + Configurations.IMMUNITY_PERIOD_MINUTES + " minutes" + addNow());
+        setComment(LocalizedMessages.getMessage("backend.user.enabledforimmunitiperiod",
+                new Object[]{adminUserName, Configurations.IMMUNITY_PERIOD_MINUTES, addNow()}));
     }
 
     public void setCommentDisabledBy(String adminUserName) {
-        setComment("Disabled by " + adminUserName + addNow());
+        setComment(LocalizedMessages.getMessage("backend.user.disabledby",
+                new Object[]{adminUserName, addNow()}));
     }
 
     public void setCommentEnabledBy(String adminUserName) {
-        setComment("Enabled by " + adminUserName + addNow());
+        setComment(LocalizedMessages.getMessage("backend.user.enabledby",
+                new Object[]{adminUserName, addNow()}));
     }
 
     public boolean userIsOld() {

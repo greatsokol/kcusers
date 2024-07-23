@@ -44,7 +44,7 @@ public class UserContoller extends CommonController {
                           Map<String, Object> model) {
         User user = userRepository.findByUserNameAndRealmName(userName, realmName);
         String wantedEnabled = formData.getFirst("enabled");
-        boolean enabled = wantedEnabled != null && wantedEnabled.equals("on");
+        boolean enabled = wantedEnabled != null && wantedEnabled.equals("true");
         user.setUserStatusFromController(enabled, getAuthorizedUserName());
         keycloakClient.updateUserFromController(user, getAuthorizedUserName());
         fillModel(model, user);
