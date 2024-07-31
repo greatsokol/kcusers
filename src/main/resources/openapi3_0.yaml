@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: KCUsers - OpenAPI 3.0
+  description: description
+  termsOfService: termsOfService
+  contact:
+    email: email@email.org
+  license:
+    name: licenseName
+    url: licenseUrl
+  version: 0.0.1
+externalDocs:
+  description: externalDocsDescr
+  url: externalDocsUrl
+servers:
+  - url: https://kcusers.local
+tags:
+  - name: user
+    description: Params of user
+  - name: users
+    description: List of users
+  - name: events
+    description: Events of user
+  - name: logins
+    description: Logins of admin
+paths:
+  /users:
+    get:
+      tags:
+        - users
+      summary: Gets the HTML page with list of users
+      description: Gets the HTML page with list of users
+      operationId: users
+      parameters:
+        - name: filter
+          in: query
+          description: name of user to make list to be filtered with
+          required: false
+          explode: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the HTML page for a UI of users list
+          content:
+            text/html:
+              schema:
+                type: string
+      security:
+        - keycloak_auth:
+            - openid
+
+  /api/users:
+    get:
+      tags:
+        - users
+      summary: Gets list of users as JSON object
+      description: Gets list of users as JSON object
+      operationId: usersApi
+      responses:
+        '200':
+          description: Returns the JSON list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersApiResponse'
+        '401':
+          description: unauthorized
+      security:
+        - bearerAuth: []
+
+  /user/{realmName}/{userName}:
+    get:
+      tags:
+        - user
+      summary: Gets the HTML page with list of user props
+      description: Gets the HTML page with list of user props
+      operationId: user
+      parameters:
+        - name: realmName
+          in: path
+          description: name of user realm
+          required: true
+          schema:
+            type: string
+        - name: userName
+          in: path
+          description: name of user
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the HTML page with list of user props
+          content:
+            text/html:
+              schema:
+                type: string
+      security:
+        - keycloak_auth:
+            - openid
+
+  /api/user/{realmName}/{userName}:
+    get:
+      tags:
+        - user
+      summary: Gets the JSON object with list of user props
+      description: Gets the JSON object with list of user props
+      operationId: userApi
+      parameters:
+        - name: realmName
+          in: path
+          description: name of user realm
+          required: true
+          schema:
+            type: string
+        - name: userName
+          in: path
+          description: name of user
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the JSON object with list of user props
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserApiResponse'
+        '401':
+          description: unauthorized
+      security:
+        - bearerAuth: []
+
+  /events/{realmName}/{userName}:
+    get:
+      tags:
+        - events
+      summary: Gets the HTML page with list of user events
+      description: Gets the HTML page with list of user events
+      operationId: userEvents
+      parameters:
+        - name: realmName
+          in: path
+          description: name of user realm
+          required: true
+          schema:
+            type: string
+        - name: userName
+          in: path
+          description: name of user
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the HTML page with list of user events
+          content:
+            text/html:
+              schema:
+                type: string
+      security:
+        - keycloak_auth:
+            - openid
+
+  /api/events/{realmName}/{userName}:
+    get:
+      tags:
+        - events
+      summary: Gets the JSON object with list of user events
+      description: Gets the JSON object with list of user events
+      operationId: userEventsApi
+      parameters:
+        - name: realmName
+          in: path
+          description: name of user realm
+          required: true
+          schema:
+            type: string
+        - name: userName
+          in: path
+          description: name of user
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the JSON object with list of user events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsApiResponse'
+        '401':
+          description: unauthorized
+      security:
+        - bearerAuth: []
+
+  /logins/{adminName}:
+    get:
+      tags:
+        - logins
+      summary: Gets the HTML page with list of admin logins
+      description: Gets the HTML page with list of admin logins
+      operationId: adminLogins
+      parameters:
+        - name: adminName
+          in: path
+          description: name of admin
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the HTML page with list of admin logins
+          content:
+            text/html:
+              schema:
+                type: string
+      security:
+        - keycloak_auth:
+            - openid
+
+  /api/logins/{adminName}:
+    get:
+      tags:
+        - logins
+      summary: Gets the JSON object with list of admin logins
+      description: Gets the JSON object with list of admin logins
+      operationId: adminLoginsApi
+      parameters:
+        - name: adminName
+          in: path
+          description: name of admin
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the JSON object with list of admin logins
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginEventsApiResponse'
+        '401':
+          description: unauthorized
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    Sort:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+          
+    Principal:
+      type: object
+      properties:
+        userName:
+          type: string
+        admin:
+          type: boolean
+        user:
+          type: boolean
+
+    Pagable:
+      type: object
+      properties:
+        pageNumber:
+          type: number
+        pageSize:
+          type: number
+        sort:
+          $ref: '#/components/schemas/Sort'
+        offset:
+          type: number
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+
+    User:
+      type: object
+      properties:
+        userName:
+          type: string
+        realmName:
+          type: string
+        userId:
+          type: string
+        lastLogin:
+          type: number
+        created:
+          type: number
+        enabled:
+          type: boolean
+        manuallyEnabledTime:
+          type: object
+        comment:
+          type: string
+
+    Event:
+      type: object
+      properties:
+        userName:
+          type: string
+        realmName:
+          type: string
+        created:
+          type: number
+        admLogin:
+          type: string
+        comment:
+          type: string
+        enabled:
+          type: boolean
+
+    LoginEvent:
+      type: object
+      properties:
+        userName:
+          type: string
+        authTime:
+          type: number
+        session:
+          type: string
+        address:
+          type: string
+
+    UsersApiResponse:
+      type: object
+      properties:
+        principal:
+          $ref: '#/components/schemas/Principal'
+        payload:
+          type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+            pagable:
+              $ref: '#/components/schemas/Pagable'
+            last:
+              type: boolean
+            totalElements:
+              type: number
+            totalPages:
+              type: number
+            size:
+              type: number
+            number:
+              type: number
+            sort:
+              $ref: '#/components/schemas/Sort'
+            first:
+              type: boolean
+            numberOfElements:
+              type: number
+            empty:
+              type: boolean
+
+    UserApiResponse:
+      type: object
+      properties:
+        principal:
+          $ref: '#/components/schemas/Principal'
+        payload:
+          $ref: '#/components/schemas/User'
+
+    EventsApiResponse:
+      type: object
+      properties:
+        principal:
+          $ref: '#/components/schemas/Principal'
+        payload:
+          type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/Event'
+            pagable:
+              $ref: '#/components/schemas/Pagable'
+            last:
+              type: boolean
+            totalElements:
+              type: number
+            totalPages:
+              type: number
+            size:
+              type: number
+            number:
+              type: number
+            sort:
+              $ref: '#/components/schemas/Sort'
+            first:
+              type: boolean
+            numberOfElements:
+              type: number
+            empty:
+              type: boolean
+
+    LoginEventsApiResponse:
+      type: object
+      properties:
+        principal:
+          $ref: '#/components/schemas/Principal'
+        payload:
+          type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/LoginEvent'
+            pagable:
+              $ref: '#/components/schemas/Pagable'
+            last:
+              type: boolean
+            totalElements:
+              type: number
+            totalPages:
+              type: number
+            size:
+              type: number
+            number:
+              type: number
+            sort:
+              $ref: '#/components/schemas/Sort'
+            first:
+              type: boolean
+            numberOfElements:
+              type: number
+            empty:
+              type: boolean
+
+  securitySchemes:
+    keycloak_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://keycloak.local/realms/master/protocol/openid-connect/auth
+          scopes:
+            openid: nice scope
+    
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
