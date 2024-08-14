@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.gs.kcusers.domain.User;
+import org.gs.kcusers.repositories.UserRepository;
 import org.gs.kcusers.service.KeycloakClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/user")
 public class UserApiContoller extends CommonController {
+    @Autowired
+    protected UserRepository userRepository;
     KeycloakClient keycloakClient;
 
     @Autowired
@@ -34,7 +37,8 @@ public class UserApiContoller extends CommonController {
 
         ObjectWriter ow = new ObjectMapper().writer();
         try {
-            return ow.writeValueAsString(response);
+            var responseJson = ow.writeValueAsString(response);
+            return responseJson;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

@@ -4,6 +4,7 @@ DIRNAME=`dirname $0`
 PROGNAME=`basename $0`
 
 clsec='CIs66oQuBCUh9aPPPk7sGnLLR4sVRb6b'
+sclsec='zxKl4pqBEcFGas6W4HAWHDtMxyk8R9xJ'
 pglpwd='admin'
 kсpwd='admin'
 

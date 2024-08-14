@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.gs.kcusers.domain.User;
+import org.gs.kcusers.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -23,6 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class UsersApiController extends CommonController {
+    @Autowired
+    protected UserRepository userRepository;
+
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping("users")
     public String getUsers(@PageableDefault Pageable pagable) {

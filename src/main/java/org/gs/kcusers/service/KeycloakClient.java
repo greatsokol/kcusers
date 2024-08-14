@@ -1,5 +1,6 @@
 package org.gs.kcusers.service;
 
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
@@ -18,7 +19,6 @@ import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,12 +34,14 @@ import java.util.Objects;
 @EnableScheduling
 public class KeycloakClient {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakClient.class);
-    @Autowired
+
+    final
     ProtectedUsers protectedUsers;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private EventRepository eventRepository;
+
+    private final UserRepository userRepository;
+
+    private final EventRepository eventRepository;
+
     @Value("${service.keycloakclient.realms}")
     private String KEYCLOAK_REALMS;
 
@@ -49,38 +51,62 @@ public class KeycloakClient {
     @Value("${service.keycloakclient.admin.realm}")
     private String KEYCLOAK_ADMIN_USER_REALM;
 
-    @Value("${service.keycloakclient.admin.login}")
+    @Value("${service.keycloakclient.admin.login:#{null}}")
     private String KEYCLOAK_ADMIN_LOGIN;
 
-    @Value("${service.keycloakclient.admin.password}")
+    @Value("${service.keycloakclient.admin.password:#{null}}")
     private String KEYCLOAK_ADMIN_PASSWORD;
 
-    @Value("${service.keycloakclient.client}")
+    @Value("${service.keycloakclient.client.client-id}")
     private String KEYCLOAK_CLIENT;
+
+    @Value("${service.keycloakclient.client.client-secret:#{null}}")
+    private String KEYCLOAK_CLIENT_SECRET;
 
     @Value("${service.keycloakclient.inactivity.dryrun}")
     private boolean KEYCLOAK_DRY_RUN;
 
-    public KeycloakClient(@Value("${service.cron}") String cron) {
+    public KeycloakClient(@Value("${service.cron}") String cron,
+                          ProtectedUsers protectedUsers,
+                          UserRepository userRepository,
+                          EventRepository eventRepository) {
         logger.info("Scheduled task with cron {}", cron);
+        this.protectedUsers = protectedUsers;
+        this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
     }
 
-    private Keycloak buildKeyclak() {
-        return KeycloakBuilder.builder()
+    private Keycloak buildKeycloak() {
+        var builder = KeycloakBuilder.builder()
                 .serverUrl(KEYCLOAK_URL)
                 .realm(KEYCLOAK_ADMIN_USER_REALM)
-                .clientId(KEYCLOAK_CLIENT)
-                .grantType(OAuth2Constants.PASSWORD)
-                .username(KEYCLOAK_ADMIN_LOGIN)
-                .password(KEYCLOAK_ADMIN_PASSWORD)
-                .build();
+                .clientId(KEYCLOAK_CLIENT);
+
+        if (KEYCLOAK_CLIENT_SECRET != null && !KEYCLOAK_CLIENT_SECRET.isEmpty()) {
+            // client credentials auth
+            builder
+                    .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                    .clientSecret(KEYCLOAK_CLIENT_SECRET);
+
+        }
+        if (KEYCLOAK_ADMIN_PASSWORD != null && !KEYCLOAK_ADMIN_PASSWORD.isEmpty()
+                && KEYCLOAK_ADMIN_LOGIN != null && !KEYCLOAK_ADMIN_LOGIN.isEmpty()) {
+            // password auth
+            builder
+                    .grantType(OAuth2Constants.PASSWORD)
+                    .username(KEYCLOAK_ADMIN_LOGIN)
+                    .password(KEYCLOAK_ADMIN_PASSWORD);
+        }
+
+        //else throw new IllegalArgumentException("Invalid keycloak admin or password, or secret");
+        return builder.build();
     }
 
     @Scheduled(cron = "${service.cron}")
     public void startPolling() {
         logger.info("-------- START TASK --------");
         List<String> realmNames = Arrays.asList(KEYCLOAK_REALMS.split("\\s*,\\s*"));
-        try (Keycloak keycloak = buildKeyclak()) {
+        try (Keycloak keycloak = buildKeycloak()) {
             realmNames.forEach(realmName -> processUsers(keycloak, getUsers(keycloak, realmName)));
         }
         logger.info("-------- FINISHED TASK --------");
@@ -153,12 +179,14 @@ public class KeycloakClient {
                     ).toList();
 
             logger.info("Users of realm {} found: {}", realmName, users.stream().map(User::getUserName).toList());
-
-        } catch (ProcessingException | NotFoundException e) {
-            if (e.getCause() instanceof NotFoundException || e instanceof NotFoundException) {
+//|
+        } catch (ProcessingException | ForbiddenException | NotFoundException e) {
+            var cause = e.getCause();
+            if (cause instanceof NotFoundException || e instanceof NotFoundException) {
                 logger.error("Realm {} not found", realmName);
-            } else if (e.getCause() instanceof HttpHostConnectException ||
-                    e.getCause() instanceof NotAuthorizedException) {
+            } else if (cause instanceof HttpHostConnectException ||
+                    cause instanceof NotAuthorizedException ||
+                    e instanceof ForbiddenException) {
                 logger.error("Connection to realm {} refused: {}", realmName, e.getLocalizedMessage());
             } else {
                 throw e;
@@ -212,7 +240,8 @@ public class KeycloakClient {
                 userRepository.save(user);
                 eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
                         "system", user.getComment(), user.getEnabled()));
-            } if (forceUpdate){
+            }
+            if (forceUpdate) {
                 userRepository.save(user);
             }
 
@@ -238,15 +267,27 @@ public class KeycloakClient {
     }
 
 
-    private void updateUser(Keycloak keycloak, User user, String admLogin) {
-        UsersResource usersResource = keycloak.realm(user.getRealmName()).users();
-        UserResource userResource = usersResource.get(user.getUserId());
-        UserRepresentation userRepresentation = userResource.toRepresentation();
-        userRepresentation.setEnabled(user.getEnabled());
-        userResource.update(userRepresentation);
-        userRepository.save(user);
-        eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(), admLogin,
-                user.getComment(), user.getEnabled()));
+    private boolean updateUser(Keycloak keycloak, User user, String admLogin) {
+        try {
+            UsersResource usersResource = keycloak.realm(user.getRealmName()).users();
+            UserResource userResource = usersResource.get(user.getUserId());
+            UserRepresentation userRepresentation = userResource.toRepresentation();
+            userRepresentation.setEnabled(user.getEnabled());
+            userResource.update(userRepresentation);
+            userRepository.save(user);
+            eventRepository.save(
+                    new Event(
+                            user.getUserName(), user.getRealmName(),
+                            Instant.now().toEpochMilli(), admLogin,
+                            user.getComment(), user.getEnabled()
+                    )
+            );
+            return true;
+        } catch (ForbiddenException e) {
+            logger.error("Error while updating user {} ({}): {}", user.getUserName(),
+                    user.getRealmName(), e.getLocalizedMessage());
+        }
+        return false;
     }
 
     private void disableUser(Keycloak keycloak, User user) {
@@ -257,9 +298,9 @@ public class KeycloakClient {
         logger.info("Successfully DISABLED user {} ({})", user.getUserName(), user.getRealmName());
     }
 
-    public void updateUserFromController(User user, String admLogin) {
-        try (Keycloak keycloak = buildKeyclak()) {
-            updateUser(keycloak, user, admLogin);
+    public boolean updateUserFromController(User user, String admLogin) {
+        try (Keycloak keycloak = buildKeycloak()) {
+            return updateUser(keycloak, user, admLogin);
         }
     }
 }

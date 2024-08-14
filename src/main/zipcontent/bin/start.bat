@@ -25,6 +25,7 @@ set JAVA_OPTS=%JAVA_OPTS% -Dapp.home=%KCUSERS_APP_HOME%
 set JAVA_OPTS=%JAVA_OPTS% -Dlogging.config=%KCUSERS_APP_HOME%/config/logback.xml
 set JAVA_OPTS=%JAVA_OPTS% -Dspring.config.location=%KCUSERS_APP_HOME%/config/application.yaml
 SET clsec=CIs66oQuBCUh9aPPPk7sGnLLR4sVRb6b
+SET sclsec=zxKl4pqBEcFGas6W4HAWHDtMxyk8R9xJ
 SET pglpwd=admin
 SET kсpwd=admin
 REM Display our environment

@@ -43,7 +43,7 @@ db:
 #-----------------------------------------------------------------------------
 front:
   issuer-uri: https://keycloak.local/realms/master
-  client-id: servlet_client
+  client-id: kcusers_servlet_client
   client-secret: ${clsec:CIs66oQuBCUh9aPPPk7sGnLLR4sVRb6b}
   userroles: user
   adminroles: admin
@@ -54,15 +54,17 @@ service:
   keycloakclient:
     realms: master,APIM,FINSTAR
     url: https://keycloak.local
-    client: admin-cli
+    client:
+      client-id: kcusers_service_client
+      client-secret: ${sclsec:zxKl4pqBEcFGas6W4HAWHDtMxyk8R9xJ}
     admin:
       realm: master
-      login: admin
-      password: ${kсpwd:admin}
+      #login: admin
+      #password: ${kсpwd:admin}
     inactivity:
       protectedusers:
         - admin
         - yetanotheradmin
-      days: 1
-      immunityperiodminutes: 5
+      days: 90
+      immunityperiodminutes: 240
       dryrun: false

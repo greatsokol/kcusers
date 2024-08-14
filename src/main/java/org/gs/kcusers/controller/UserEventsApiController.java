@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.gs.kcusers.domain.Event;
+import org.gs.kcusers.repositories.EventRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -24,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/events")
 public class UserEventsApiController extends CommonController {
+    @Autowired
+    protected EventRepository eventRepository;
 
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping("/{realmName}/{userName}")

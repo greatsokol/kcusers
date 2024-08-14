@@ -20,7 +20,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.springframework.security.web" level="info"/>
+    <logger name="org.springframework.security.web" level="error"/>
 
     <root level="info">
         <appender-ref ref="STDOUT"/>

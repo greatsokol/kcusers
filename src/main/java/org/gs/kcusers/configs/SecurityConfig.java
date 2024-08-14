@@ -1,5 +1,6 @@
 package org.gs.kcusers.configs;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gs.kcusers.domain.Login;
 import org.gs.kcusers.repositories.LoginRepository;
 import org.slf4j.Logger;
@@ -29,8 +30,12 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 
+import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static org.gs.kcusers.configs.Configurations.ROLES_TOKEN_CLAIM_NAME;
 
 @Configuration
 @EnableWebSecurity
@@ -43,6 +48,8 @@ public class SecurityConfig {
 
     @Autowired
     LoginRepository loginRepository;
+    @Autowired
+    private ObjectMapper jacksonObjectMapper;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -76,7 +83,7 @@ public class SecurityConfig {
             loginRepository.save(new Login(
                     principal.getPreferredUsername(),
                     principal.getAuthenticatedAt().toEpochMilli(),
-                    authDetails.getSessionId() ,
+                    authDetails.getSessionId(),
                     authDetails.getRemoteAddress() + " (s)")
             );
             response.sendRedirect("/");
@@ -95,7 +102,8 @@ public class SecurityConfig {
         converter.setPrincipalClaimName("preferred_username");
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             var authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
-            var roles = (List<String>) jwt.getClaimAsMap("realm_access").get("roles");
+            //var roles = (List<String>) jwt.getClaimAsMap("realm_access").get("roles");
+            var roles = jwt.getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
 
             return Stream.concat(authorities.stream(),
                             roles.stream()
@@ -108,17 +116,40 @@ public class SecurityConfig {
         return converter;
     }
 
+    private static List<String> getRolesFromJwt(String jwt, String claimFieldName) {
+        String[] chunks = jwt.split("\\.");
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        //String header = new String(decoder.decode(chunks[0]));
+        String payload = new String(decoder.decode(chunks[1]));
+        var objectMapper = new ObjectMapper();
+        try {
+            var jsonObj = objectMapper.readValue(payload, Object.class);
+            var claim = ((LinkedHashMap<String, Object>) jsonObj).get(claimFieldName);
+            return (List<String>)claim;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Bean
     public OAuth2UserService<OidcUserRequest, OidcUser> oAuth2UserService() {
         var oidcUserService = new OidcUserService();
         return userRequest -> {
-            var oidcUser = oidcUserService.loadUser(userRequest);
+            var realm_roles = getRolesFromJwt(
+                    userRequest.getAccessToken().getTokenValue(),
+                    ROLES_TOKEN_CLAIM_NAME
+            );
 
-            var realm_access = oidcUser.getIdToken().getClaimAsMap("realm_access");
-            if (realm_access == null) throw new AuthenticationServiceException("IdToken must contain \"realm_access\"");
-            List<?> realm_roles = (List<?>) realm_access.get("roles");
-            if (realm_roles == null)
-                throw new AuthenticationServiceException("IdToken must contain \"realm_access/roles\"");
+            var oidcUser = oidcUserService.loadUser(userRequest);
+            if(realm_roles == null) {
+                realm_roles = oidcUser.getIdToken().getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
+                if (realm_roles == null) {
+                    throw new AuthenticationServiceException("IdToken must contain \"" + ROLES_TOKEN_CLAIM_NAME + "\"");
+                }
+            }
+            //List<?> realm_roles = (List<?>) realm_access.get("roles");
+            //if (realm_roles == null)
+            //throw new AuthenticationServiceException("IdToken must contain \"realm_access/roles\"");
 
             var authorities = Stream.concat(
                             oidcUser.getAuthorities().stream(),
@@ -128,8 +159,6 @@ public class SecurityConfig {
                                     .map(SimpleGrantedAuthority::new)
                                     .map(GrantedAuthority.class::cast))
                     .toList();
-
-
             return new DefaultOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
         };
     }

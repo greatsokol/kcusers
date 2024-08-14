@@ -2,14 +2,11 @@ package org.gs.kcusers.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.gs.kcusers.repositories.EventRepository;
-import org.gs.kcusers.repositories.LoginRepository;
-import org.gs.kcusers.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -19,28 +16,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.gs.kcusers.configs.Configurations.ROLES_TOKEN_CLAIM_NAME;
+
 
 public class CommonController {
-    @Autowired
-    protected UserRepository userRepository;
-    @Autowired
-    protected EventRepository eventRepository;
-    @Autowired
-    protected LoginRepository loginRepository;
     @Value("${front.adminroles}")
     protected String adminRoles;
     @Value("${front.userroles}")
     protected String userRoles;
 
-//    public static CsrfToken getCurrentCsrfToken() {
-//        // quick-test
-//        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
-//        HttpSession session = attr.getRequest().getSession(false);
-//        if (session == null) {
-//            return null;
-//        }
-//        return (CsrfToken) session.getAttribute("org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN");
-//    }
+    CommonController() {
+
+    }
+
+    CommonController(String adminRoles, String userRoles) {
+        this.adminRoles = adminRoles;
+        this.userRoles = userRoles;
+    }
 
     @Bean
     protected List<String> getUserRoles() {
@@ -60,6 +52,8 @@ public class CommonController {
             return principal.getPreferredUsername();
         } else if (principalobject instanceof Jwt jwt) {
             return jwt.getClaimAsString("preferred_username");
+        } else if (principalobject instanceof User user) {
+            return user.getUsername();
         }
         return null;
     }
@@ -73,9 +67,14 @@ public class CommonController {
                     map(GrantedAuthority::getAuthority).
                     toList();
         } else if (principalobject instanceof Jwt jwt) {
-            return (List<String>) jwt.
-                    getClaimAsMap("realm_access").
-                    get("roles");
+            return jwt.getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
+            //getClaimAsMap("realm_access").
+            //get("roles");
+        } else if (principalobject instanceof User user) {
+            return user.getAuthorities().
+                    stream().
+                    map(GrantedAuthority::getAuthority).
+                    toList();
         } else return null;
     }
 
@@ -97,14 +96,13 @@ public class CommonController {
     }
 
     protected WebAuthenticationDetails getAuthDetails() {
-        WebAuthenticationDetails authDeatails = (WebAuthenticationDetails) SecurityContextHolder
-                .getContext().getAuthentication().getDetails();
-        return authDeatails;
+        var context = SecurityContextHolder.getContext();
+        return (WebAuthenticationDetails) context.getAuthentication().getDetails();
     }
 
     @Data
     @AllArgsConstructor
-    static class Principal {
+    public static class Principal {
         String userName;
         boolean admin;
         boolean user;

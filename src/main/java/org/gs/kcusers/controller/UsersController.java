@@ -1,5 +1,7 @@
 package org.gs.kcusers.controller;
 
+import org.gs.kcusers.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,6 +17,9 @@ import java.util.Map;
 @Controller
 @RequestMapping("/")
 public class UsersController extends CommonController {
+    @Autowired
+    protected UserRepository userRepository;
+
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping
     public String usersPage(Map<String, Object> model, @PageableDefault Pageable pagable) {

@@ -1,6 +1,7 @@
 package org.gs.kcusers.controller;
 
 import org.gs.kcusers.domain.User;
+import org.gs.kcusers.repositories.UserRepository;
 import org.gs.kcusers.service.KeycloakClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,6 +16,8 @@ import java.util.Map;
 @Controller
 @RequestMapping("/user")
 public class UserContoller extends CommonController {
+    @Autowired
+    protected UserRepository userRepository;
     KeycloakClient keycloakClient;
 
     @Autowired
@@ -22,7 +25,7 @@ public class UserContoller extends CommonController {
         this.keycloakClient = keycloakClient;
     }
 
-    private void fillModel(Map<String, Object> model, User user){
+    private void fillModel(Map<String, Object> model, User user) {
         model.put("user", user);
         model.put("isAdmin", adminRolesGranted());
         model.put("authorizedusername", getAuthorizedUserName());

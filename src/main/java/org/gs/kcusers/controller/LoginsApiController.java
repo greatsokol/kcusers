@@ -10,6 +10,10 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.gs.kcusers.domain.Login;
+import org.gs.kcusers.repositories.LoginRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -25,6 +29,10 @@ import java.time.Instant;
 @RestController
 @RequestMapping("/api/logins")
 public class LoginsApiController extends CommonController {
+    @Autowired
+    protected LoginRepository loginRepository;
+    Logger logger = LoggerFactory.getLogger(LoginsApiController.class);
+
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping("/{userName}")
     public String eventsPage(@PathVariable String userName,
@@ -46,15 +54,13 @@ public class LoginsApiController extends CommonController {
     @PostMapping("/{userName}")
     public String addLogin(@PathVariable String userName,
                            @RequestBody MultiValueMap<String, String> formData) {
-//        logger.info("Authentication success {} ({})",
-//                principal.getPreferredUsername(), authentication.getAuthorities());
         WebAuthenticationDetails authDetails = getAuthDetails();
 
         loginRepository.save(new Login(
                 userName,
                 Instant.now().toEpochMilli(),
                 formData.getFirst("sessionid"),
-                authDetails.getRemoteAddress())
+                authDetails == null ? "" : authDetails.getRemoteAddress())
         );
         return "";
     }

@@ -66,7 +66,7 @@ public class User {
 
     public void setCommentDisabledForInactivity() {
         setComment(LocalizedMessages.getMessage("backend.user.disabledduetoinactivity",
-                new Object[]{ Configurations.INACTIVITY_DAYS, addNow() }));
+                new Object[]{Configurations.INACTIVITY_DAYS(), addNow()}));
     }
 
     public void setCommentEnabledAfterBecomeActive() {
@@ -75,7 +75,7 @@ public class User {
 
     public void setCommentEnabledTemporarily(String adminUserName) {
         setComment(LocalizedMessages.getMessage("backend.user.enabledforimmunitiperiod",
-                new Object[]{adminUserName, Configurations.IMMUNITY_PERIOD_MINUTES, addNow()}));
+                new Object[]{adminUserName, Configurations.IMMUNITY_PERIOD_MINUTES(), addNow()}));
     }
 
     public void setCommentDisabledBy(String adminUserName) {
@@ -90,29 +90,29 @@ public class User {
 
     public boolean userIsOld() {
         Instant created = Instant.ofEpochMilli(getCreated());
-        Instant threshold = Instant.now().minus(Configurations.INACTIVITY_DAYS, ChronoUnit.DAYS);
+        Instant threshold = Instant.now().minus(Configurations.INACTIVITY_DAYS(), ChronoUnit.DAYS);
         boolean result = created.isBefore(threshold);
         if (result) {
             logger.info("{} ({}) created {} before {} (user is old, INACTIVITY_DAYS={})",
-                    getUserName(), getRealmName(), created, threshold, Configurations.INACTIVITY_DAYS);
+                    getUserName(), getRealmName(), created, threshold, Configurations.INACTIVITY_DAYS());
         } else {
             logger.info("{} ({}) created {} after {} (user is new, INACTIVITY_DAYS={})",
-                    getUserName(), getRealmName(), created, threshold, Configurations.INACTIVITY_DAYS);
+                    getUserName(), getRealmName(), created, threshold, Configurations.INACTIVITY_DAYS());
         }
         return result;
     }
 
     public boolean userIsInactive() {
         Instant lastlogin = Instant.ofEpochMilli(getLastLogin());
-        Instant threshold = Instant.now().minus(Configurations.INACTIVITY_DAYS, ChronoUnit.DAYS);
+        Instant threshold = Instant.now().minus(Configurations.INACTIVITY_DAYS(), ChronoUnit.DAYS);
 
         boolean result = lastlogin.isBefore(threshold);
         if (result) {
             logger.info("{} ({}) logged in {} before {} (user is inactive, INACTIVITY_DAYS={})",
-                    getUserName(), getRealmName(), lastlogin, threshold, Configurations.INACTIVITY_DAYS);
+                    getUserName(), getRealmName(), lastlogin, threshold, Configurations.INACTIVITY_DAYS());
         } else {
             logger.info("{} ({}) logged in {} after {} (user is active, INACTIVITY_DAYS={})",
-                    getUserName(), getRealmName(), lastlogin, threshold, Configurations.INACTIVITY_DAYS);
+                    getUserName(), getRealmName(), lastlogin, threshold, Configurations.INACTIVITY_DAYS());
         }
         return result;
     }
@@ -121,34 +121,36 @@ public class User {
         Long l = getManuallyEnabledTime();
         if (l == null) return true;
         Instant userManuallyEnabledTime = Instant.ofEpochMilli(l);
-        Instant threshold = userManuallyEnabledTime.plus(Configurations.IMMUNITY_PERIOD_MINUTES, ChronoUnit.MINUTES);
+        Instant threshold = userManuallyEnabledTime.plus(Configurations.IMMUNITY_PERIOD_MINUTES(), ChronoUnit.MINUTES);
         Instant now = Instant.now();
         boolean result = threshold.isBefore(now);
         if (result) {
             logger.info("{} ({}) manually enabled {} before {} (user become inactive again, IMMUNITY_PERIOD_MINUTES={})",
-                    getUserName(), getRealmName(), userManuallyEnabledTime, now, Configurations.IMMUNITY_PERIOD_MINUTES);
+                    getUserName(), getRealmName(), userManuallyEnabledTime, now, Configurations.IMMUNITY_PERIOD_MINUTES());
         } else {
             logger.info("{} ({}) manually enabled {} after {} (user is still active, IMMUNITY_PERIOD_MINUTES={})",
-                    getUserName(), getRealmName(), userManuallyEnabledTime, now, Configurations.IMMUNITY_PERIOD_MINUTES);
+                    getUserName(), getRealmName(), userManuallyEnabledTime, now, Configurations.IMMUNITY_PERIOD_MINUTES());
         }
         return result;
     }
 
     public void setUserStatusFromController(boolean enabled, String adminName) {
-        boolean userShouldBeBlocked = userIsOldAndInactive();
-        boolean enableTemporarily = enabled && userShouldBeBlocked;
-        setEnabled(enabled);
-        if (enabled) {
-            if (enableTemporarily) {
-                setCommentEnabledTemporarily(adminName);
-                setManuallyEnabledTime(Instant.now().toEpochMilli());
+        if (this.enabled != enabled) {
+            boolean userShouldBeBlocked = userIsOldAndInactive();
+            boolean enableTemporarily = enabled && userShouldBeBlocked;
+            setEnabled(enabled);
+            if (enabled) {
+                if (enableTemporarily) {
+                    setCommentEnabledTemporarily(adminName);
+                    setManuallyEnabledTime(Instant.now().toEpochMilli());
+                } else {
+                    setCommentEnabledBy(adminName);
+                    setManuallyEnabledTime(null);
+                }
             } else {
-                setCommentEnabledBy(adminName);
+                setCommentDisabledBy(adminName);
                 setManuallyEnabledTime(null);
             }
-        } else {
-            setCommentDisabledBy(adminName);
-            setManuallyEnabledTime(null);
         }
     }
 
