@@ -71,7 +71,7 @@ class UserTest {
 
     @Test
     void testUser_WhenUserShouldBeBlocked_ShouldReturnTrue() {
-        Assert.isTrue(testUser.userShouldBeBlocked(), "user should not be blocked");
+        Assert.isTrue(testUser.userIsOldAndInactive(), "user should not be blocked");
     }
 
     @Test

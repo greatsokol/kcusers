@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,11 +40,15 @@ class UsersApiControllerTest {
 
     @BeforeEach
     void setUp() {
-
         when(userRepository.findAllByOrderByRealmNameAscUserNameAsc(any(Pageable.class)))
                 .thenAnswer(invocationOnMock -> new PageImpl<>(
                         Collections.nCopies(total, user),
                         invocationOnMock.getArgument(0, Pageable.class), total));
+
+        when(userRepository.findByUserNameContainingOrderByRealmNameAscUserNameAsc(anyString(), any(Pageable.class)))
+                .thenAnswer(invocationOnMock -> new PageImpl<>(
+                        Collections.nCopies(total, user),
+                        invocationOnMock.getArgument(1, Pageable.class), total));
     }
 
     @Test
@@ -51,6 +56,19 @@ class UsersApiControllerTest {
     void getUsers() throws Exception {
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.content").isArray())
+                .andExpect(jsonPath("$.payload.content.length()").value(total))
+                .andExpect(jsonPath("$.payload.totalElements").value(total))
+                .andExpect(jsonPath("$.principal.userName").value(authorizedUserName));
+    }
+
+    @Test
+    @WithMockUser(username = authorizedUserName)
+    void getUsersFiltered() throws Exception {
+        final String userName = "username";
+        mockMvc.perform(get("/api/users?filter="+userName))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.filter").value(userName))
                 .andExpect(jsonPath("$.payload.content").isArray())
                 .andExpect(jsonPath("$.payload.content.length()").value(total))
                 .andExpect(jsonPath("$.payload.totalElements").value(total))

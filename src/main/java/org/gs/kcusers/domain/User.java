@@ -52,25 +52,14 @@ public class User {
         return " (" + formattedDate + ")";
     }
 
-    public boolean userIsOldAndInactive() {
-        return userIsOld() && userIsInactive();
-    }
-
-    public boolean userShouldBeBlocked() {
-        return userIsOldAndInactive() && userIsNotInImmunityPeriod();
-    }
-
-    public boolean userShouldBeUnblocked() {
-        return !userIsInactive() && !userIsNotInImmunityPeriod();
-    }
-
     public void setCommentDisabledForInactivity() {
         setComment(LocalizedMessages.getMessage("backend.user.disabledduetoinactivity",
-                new Object[]{Configurations.INACTIVITY_DAYS(), addNow()}));
+                new Object[]{addNow()}));
     }
 
     public void setCommentEnabledAfterBecomeActive() {
-        setComment(LocalizedMessages.getMessage("backend.user.enabledbecomeactive"));
+        setComment(LocalizedMessages.getMessage("backend.user.enabledbecomeactive",
+                new Object[]{addNow()}));
     }
 
     public void setCommentEnabledTemporarily(String adminUserName) {
@@ -83,9 +72,8 @@ public class User {
                 new Object[]{adminUserName, addNow()}));
     }
 
-    public void setCommentEnabledBy(String adminUserName) {
-        setComment(LocalizedMessages.getMessage("backend.user.enabledby",
-                new Object[]{adminUserName, addNow()}));
+    public boolean userIsOldAndInactive() {
+        return userIsOld() && userIsInactive();
     }
 
     public boolean userIsOld() {
@@ -117,6 +105,24 @@ public class User {
         return result;
     }
 
+    public boolean userIsInactiveInImmunityPeriod() {
+        Long l = getManuallyEnabledTime();
+        if (l == null) return false;
+
+        Instant lastlogin = Instant.ofEpochMilli(getLastLogin());
+        Instant threshold = Instant.ofEpochMilli(l);
+
+        boolean result = lastlogin.isBefore(threshold);
+        if (result) {
+            logger.info("{} ({}) logged in {} before {} (user is inactive in immunity period, IMMUNITY_PERIOD_MINUTES={})",
+                    getUserName(), getRealmName(), lastlogin, threshold, Configurations.IMMUNITY_PERIOD_MINUTES());
+        } else {
+            logger.info("{} ({}) logged in {} after {} (user is active in immunity period, IMMUNITY_PERIOD_MINUTES={})",
+                    getUserName(), getRealmName(), lastlogin, threshold, Configurations.IMMUNITY_PERIOD_MINUTES());
+        }
+        return result;
+    }
+
     public boolean userIsNotInImmunityPeriod() {
         Long l = getManuallyEnabledTime();
         if (l == null) return true;
@@ -136,24 +142,16 @@ public class User {
 
     public void setUserStatusFromController(boolean enabled, String adminName) {
         if (this.enabled != enabled) {
-            boolean userShouldBeBlocked = userIsOldAndInactive();
-            boolean enableTemporarily = enabled && userShouldBeBlocked;
             setEnabled(enabled);
             if (enabled) {
-                if (enableTemporarily) {
-                    setCommentEnabledTemporarily(adminName);
-                    setManuallyEnabledTime(Instant.now().toEpochMilli());
-                } else {
-                    setCommentEnabledBy(adminName);
-                    setManuallyEnabledTime(null);
-                }
+                setCommentEnabledTemporarily(adminName);
+                setManuallyEnabledTime(Instant.now().toEpochMilli());
             } else {
                 setCommentDisabledBy(adminName);
                 setManuallyEnabledTime(null);
             }
         }
     }
-
 
     public static class UserPK implements Serializable {
         private String userName;

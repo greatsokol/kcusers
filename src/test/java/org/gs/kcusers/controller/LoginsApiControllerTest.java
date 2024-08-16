@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,9 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(LoginsApiController.class)
 class LoginsApiControllerTest {
-    private final String authorizedUserName = "Admin Name";
     final int total = 10;
-
+    private final String authorizedUserName = "Admin Name";
     @MockBean
     LoginRepository loginRepository;
 
@@ -42,7 +42,7 @@ class LoginsApiControllerTest {
     @BeforeEach
     void setUp() {
         when(loginRepository.findByUserNameOrderByAuthTimeDesc(
-                any(String.class), any(Pageable.class))
+                anyString(), any(Pageable.class))
         ).thenAnswer(invocationOnMock -> new PageImpl<>(
                 Collections.nCopies(total, login),
                 invocationOnMock.getArgument(1, Pageable.class), total));

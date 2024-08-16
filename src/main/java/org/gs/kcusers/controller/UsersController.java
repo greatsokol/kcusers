@@ -36,10 +36,14 @@ public class UsersController extends CommonController {
                                     @PageableDefault Pageable pagable) {
         if (filter.isEmpty()) {
             return usersPage(model, pagable);
-        } else {
-            model.put("filter", filter);
-            model.put("page", userRepository.findByUserNameContainingOrderByRealmNameAscUserNameAsc(filter, pagable));
         }
+
+        if(filter.length() > 20) {
+            filter = filter.substring(0, 20);
+        }
+
+        model.put("filter", filter);
+        model.put("page", userRepository.findByUserNameContainingOrderByRealmNameAscUserNameAsc(filter, pagable));
         model.put("authorizedusername", getAuthorizedUserName());
 
         return "userspage";

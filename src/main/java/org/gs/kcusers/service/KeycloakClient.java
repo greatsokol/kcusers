@@ -179,7 +179,6 @@ public class KeycloakClient {
                     ).toList();
 
             logger.info("Users of realm {} found: {}", realmName, users.stream().map(User::getUserName).toList());
-//|
         } catch (ProcessingException | ForbiddenException | NotFoundException e) {
             var cause = e.getCause();
             if (cause instanceof NotFoundException || e instanceof NotFoundException) {
@@ -226,46 +225,43 @@ public class KeycloakClient {
 
             }
 
-            // фильтруем недавно созданных пользователей (текущая дата - настройка inactivity.days)
-            // фильтруем активных пользователей (текущая дата - настройка inactivity.days)
-            // фильтруем недавно включенных вручную пользователей (настройка inactivity.immunityperiodminutes)
-            boolean shouldBeBlocked = user.userShouldBeBlocked();
-            if (user.getEnabled() && shouldBeBlocked) {
-                user.setEnabled(false);
-                logger.info("User {} ({}) become inactive. Will be DISABLED.", user.getUserName(), user.getRealmName());
+            boolean userIsNotInImmunityPeriod = user.userIsNotInImmunityPeriod();
+            if (user.getEnabled() && user.userIsOldAndInactive() && userIsNotInImmunityPeriod) {
+                // Блокировать пользоваеля, если:
+                // * пользователь старый,
+                // * не логинился в течении INACTIVITY_DAYS дней
+                // * не находится во временном включенном состоянии IMMUNITY_PERIOD_MINUTES минут
+                logger.info("User {} ({}) become inactive. Will be DISABLED.",
+                        user.getUserName(), user.getRealmName());
                 disable = true;
-            } else if (user.getEnabled() && user.userShouldBeUnblocked()) {
-                user.setManuallyEnabledTime(null);
-                user.setCommentEnabledAfterBecomeActive();
-                userRepository.save(user);
-                eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
-                        "system", user.getComment(), user.getEnabled()));
+            } else if (user.getEnabled() && userIsNotInImmunityPeriod && user.getManuallyEnabledTime() != null) {
+                if (user.userIsInactiveInImmunityPeriod()) {
+                    // Блокировать пользоваеля, если:
+                    // * находится во временном включенном состоянии IMMUNITY_PERIOD_MINUTES минут
+                    // * не залогинился за последние IMMUNITY_PERIOD_MINUTES минут
+                    logger.info("User {} ({}) not logged in in immunity period. Will be DISABLED.",
+                            user.getUserName(), user.getRealmName());
+                    disable = true;
+                } else {
+                    // Разблокировать пользоваеля
+                    logger.info("User {} ({}) become active. Will be ENABLED.", user.getUserName(), user.getRealmName());
+                    user.setManuallyEnabledTime(null);
+                    user.setCommentEnabledAfterBecomeActive();
+                    userRepository.save(user);
+                    eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
+                            "system", user.getComment(), user.getEnabled()));
+                }
             }
+
             if (forceUpdate) {
                 userRepository.save(user);
             }
 
-            //else if (!user.getEnabled() && !shouldBeBlocked) {
-            //user.setEnabled(true);
-            //user.setManuallyEnabledTime(null);
-            //user.setCommentEnabledBy("service automatically");
-            //userRepository.save(user);
-            //} else
-//            else if (ourSavedUser == null) {
-//                userRepository.save(user); // add new user
-//
-//            }
-
             if (disable) {
-                if (!KEYCLOAK_DRY_RUN) {
-                    disableUser(keycloak, user);
-                } else {
-                    logger.info("(DRY RUN) DISABLED user {} ({})", user.getUserName(), user.getRealmName());
-                }
+                disableUser(keycloak, user);
             }
         }
     }
-
 
     private boolean updateUser(Keycloak keycloak, User user, String admLogin) {
         try {
@@ -273,7 +269,11 @@ public class KeycloakClient {
             UserResource userResource = usersResource.get(user.getUserId());
             UserRepresentation userRepresentation = userResource.toRepresentation();
             userRepresentation.setEnabled(user.getEnabled());
-            userResource.update(userRepresentation);
+            if (!KEYCLOAK_DRY_RUN) {
+                userResource.update(userRepresentation);
+            } else {
+                logger.info("DRY RUN ENBLED. Update of user {} ({}) skipped", user.getUserName(), user.getRealmName());
+            }
             userRepository.save(user);
             eventRepository.save(
                     new Event(

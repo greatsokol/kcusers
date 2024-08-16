@@ -15,7 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -48,7 +48,7 @@ class UserApiContollerTest {
         //ReflectionTestUtils.setField(user, "realmName", realmName);
         when(user.getUserName()).thenReturn(userName);
         when(user.getRealmName()).thenReturn(realmName);
-        when(userRepository.findByUserNameAndRealmName(any(String.class), any(String.class))).thenReturn(user);
+        when(userRepository.findByUserNameAndRealmName(anyString(), anyString())).thenReturn(user);
         doNothing().when(keycloakClient).startPolling();
     }
 
@@ -65,8 +65,8 @@ class UserApiContollerTest {
     @Test
     @WithMockUser(username = authorizedUserName)
     void putUser() throws Exception {
-        when(keycloakClient.updateUserFromController(any(User.class), any(String.class))).thenReturn(true);
-        doNothing().when(user).setUserStatusFromController(any(Boolean.class), any(String.class));
+        when(keycloakClient.updateUserFromController(any(User.class), anyString())).thenReturn(true);
+        doNothing().when(user).setUserStatusFromController(anyBoolean(), anyString());
         mockMvc.perform(post("/api/user/" + realmName + "/" + userName)
                         .with(csrf()).contentType("application/x-www-form-urlencoded")
                         .content("enabled=true"))

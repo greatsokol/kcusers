@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @EnableWebSecurity
@@ -28,14 +29,7 @@ public class UsersApiController extends CommonController {
     @Autowired
     protected UserRepository userRepository;
 
-    @PreAuthorize("hasAnyAuthority(@getUserRoles)")
-    @GetMapping("users")
-    public String getUsers(@PageableDefault Pageable pagable) {
-        UsersApiResponse response = new UsersApiResponse(
-                getPrincipal(),
-                userRepository.findAllByOrderByRealmNameAscUserNameAsc(pagable)
-        );
-
+    private String responseToJson(UsersApiResponse response) {
         ObjectWriter ow = new ObjectMapper().writer();//.withDefaultPrettyPrinter();
         try {
             return ow.writeValueAsString(response);
@@ -44,10 +38,41 @@ public class UsersApiController extends CommonController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority(@getUserRoles)")
+    @GetMapping("users")
+    public String getUsers(@PageableDefault Pageable pagable) {
+        return responseToJson(new UsersApiResponse(
+                getPrincipal(),
+                userRepository.findAllByOrderByRealmNameAscUserNameAsc(pagable),
+                null
+        ));
+    }
+
+    @PreAuthorize("hasAnyAuthority(@getUserRoles)")
+    @GetMapping(path = "users", params = "filter")
+    public String getUsers(@RequestParam String filter, @PageableDefault Pageable pagable) {
+
+        if (filter.isEmpty()) {
+            return getUsers(pagable);
+        }
+
+        if(filter.length() > 20) {
+            filter = filter.substring(0, 20);
+        }
+
+        return responseToJson(new UsersApiResponse(
+                getPrincipal(),
+                userRepository.findByUserNameContainingOrderByRealmNameAscUserNameAsc(filter, pagable),
+                filter
+        ));
+    }
+
+
     @Data
     @AllArgsConstructor
     static private class UsersApiResponse {
         Principal principal;
         Page<User> payload;
+        String filter;
     }
 }

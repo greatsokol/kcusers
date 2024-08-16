@@ -22,7 +22,7 @@
 
             <form class="d-flex" method="get" role="search" th:if="${filter == null}">
                 <input aria-label="Search" class="form-control me-2" name="filter"
-                       th:placeholder="#{front.mainpage.search.placeholder}" type="search">
+                       th:placeholder="#{front.mainpage.search.placeholder}" type="search" maxlength="20">
                 <button class="btn btn-outline-success" type="submit"
                         th:text="#{front.mainpage.search.button}"></button>
             </form>

@@ -48,8 +48,6 @@ public class SecurityConfig {
 
     @Autowired
     LoginRepository loginRepository;
-    @Autowired
-    private ObjectMapper jacksonObjectMapper;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
