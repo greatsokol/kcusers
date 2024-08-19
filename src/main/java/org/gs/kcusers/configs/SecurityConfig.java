@@ -55,7 +55,9 @@ public class SecurityConfig {
         http.oauth2Login(Customizer.withDefaults());
 
         return http
-                .authorizeHttpRequests(req -> req.anyRequest().authenticated())
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers("/metrics").permitAll()
+                        .anyRequest().authenticated())
                 .oauth2Login(login -> login.successHandler(authenticationSuccessHandler()))
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(
                                 request -> new CorsConfiguration().applyPermitDefaultValues()

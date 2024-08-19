@@ -13,4 +13,6 @@ public interface UserRepository extends JpaRepository<User, String> {
     Page<User> findByUserNameContainingOrderByRealmNameAscUserNameAsc(String userName, Pageable pagable);
 
     Page<User> findAllByOrderByRealmNameAscUserNameAsc(Pageable pagable);
+
+    long countByEnabled(boolean enabled);
 }
