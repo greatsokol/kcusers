@@ -26,13 +26,13 @@ public class MetricsController {
         long disabled = all - enabled;
 
         long time = Instant.now().toEpochMilli();
-        return "# HELP health_total Health OK if equals 1.\n" +
-                "# TYPE health_total counter\n" +
-                "health_total 1 " + time + "\n" +
-                "# HELP users_total User counters (all, enabled, disabled).\n" +
-                "# TYPE users_total counter\n" +
-                "users_total {mode=\"all\"} " + all + " " + time + "\n" +
-                "users_total {mode=\"enabled\"} " + enabled + " " + time + "\n" +
-                "users_total {mode=\"disabled\"} " + disabled + " " + time + "\n";
+        return "# HELP health Health OK if equals 1.\n" +
+                "# TYPE health gauge\n" +
+                "health 1 " + time + "\n" +
+                "# HELP users User counters (all, enabled, disabled).\n" +
+                "# TYPE users gauge\n" +
+                "users {mode=\"all\"} " + all + " " + time + "\n" +
+                "users {mode=\"enabled\"} " + enabled + " " + time + "\n" +
+                "users {mode=\"disabled\"} " + disabled + " " + time + "\n";
     }
 }

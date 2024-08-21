@@ -26,12 +26,13 @@ public class Event {
     Long created;
     @NonNull
     String admLogin;
-    @NonNull
+
     String comment;
 
     Boolean enabled;
 
-    public Event() {}
+    public Event() {
+    }
 
     public static class EventPK implements Serializable {
         private String userName;

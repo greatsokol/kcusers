@@ -6,11 +6,11 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/bootstrap/bootstrap.min.css}">
+    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/style/bootstrap.min.css}">
     <link crossorigin="anonymous" rel="stylesheet" th:href="@{/style/style.css}">
     <title>KC Users</title>
 </head>
-<body onload="timedRefresh(60000);">
+<body id="body">
 <div class="container">
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
@@ -21,10 +21,10 @@
             <div class="navbar-collapse"></div>
 
             <form class="d-flex" method="get" role="search" th:if="${filter == null}">
-                <input aria-label="Search" class="form-control me-2" name="filter"
-                       th:placeholder="#{front.mainpage.search.placeholder}" type="search" maxlength="20">
-                <button class="btn btn-outline-success" type="submit"
-                        th:text="#{front.mainpage.search.button}"></button>
+                <input aria-label="Search" class="form-control me-2" maxlength="20"
+                       name="filter" th:placeholder="#{front.mainpage.search.placeholder}" type="search">
+                <button class="btn btn-outline-success" th:text="#{front.mainpage.search.button}"
+                        type="submit"></button>
             </form>
 
             <a aria-current="page" class="btn btn-outline-danger" href="/"
@@ -36,7 +36,7 @@
                th:text="#{front.mainpage.button.logins}"></a>
         </div>
     </nav>
-    <div th:if="${page.getContent().isEmpty()}" class="text-center h3" th:text="#{front.mainpage.nousersfound}"></div>
+    <div class="text-center h3" th:if="${page.getContent().isEmpty()}" th:text="#{front.mainpage.nousersfound}"></div>
     <div th:unless="${page.getContent().isEmpty()}">
         <table class="table table-hover">
             <thead>
@@ -51,13 +51,11 @@
             </tr>
             </thead>
             <tbody>
-            <tr onclick="navigateToUserPage(this)" style="cursor: pointer;"
-                th:class="${user.getEnabled() ? (user.getManuallyEnabledTime() == null ? 'table-success' : 'table-warning') : 'table-danger'}"
+            <tr th:class="'clickable-row user-row ' + ${user.getEnabled() ? (user.getManuallyEnabledTime() == null ? 'table-success' : 'table-warning') : 'table-danger'}"
                 th:data="'/user/' + ${user.getRealmName()} + '/' + ${user.getUserName()}"
                 th:each="user : ${page.getContent()}"
-                th:id="${user.getUserId()}"
+                th:id="'user-'+${user.getUserId()}"
             >
-
                 <th><span th:text="${user.getUserName()}"/></th>
                 <td><span th:text="${user.getRealmName()}"/></td>
                 <td><span th:text="${user.getUserId()}"/></td>
@@ -65,10 +63,10 @@
                 <td><span th:text="${user.getLastLogin() != 0 ? #dates.format(user.getLastLogin()) : ''}"/></td>
                 <td><span th:text="${user.getComment()}"/></td>
                 <td>
-                    <span th:if="${user.getEnabled()}" class="badge text-bg-success"
+                    <span class="badge text-bg-success" th:if="${user.getEnabled()}"
                           th:text="#{front.status.enabled}"/>
-                    <span th:unless="${user.getEnabled()}" class="badge text-bg-danger"
-                          th:text="#{front.status.disabled}"/>
+                    <span class="badge text-bg-danger" th:text="#{front.status.disabled}"
+                          th:unless="${user.getEnabled()}"/>
                 </td>
             </tr>
 
@@ -77,7 +75,6 @@
         <div class="sticky-bottom" th:insert="~{pager.html :: pager('/')}"></div>
     </div>
 </div>
-<script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
 <script crossorigin="anonymous" th:src="@{/script/script.js}"></script>
 </body>
 </html>

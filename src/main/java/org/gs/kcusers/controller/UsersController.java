@@ -24,6 +24,7 @@ public class UsersController extends CommonController {
     @GetMapping
     public String usersPage(Map<String, Object> model, @PageableDefault Pageable pagable) {
         model.put("page", userRepository.findAllByOrderByRealmNameAscUserNameAsc(pagable));
+        model.put("realms", userRepository.finaAllRealmNames());
         model.put("authorizedusername", getAuthorizedUserName());
 
         return "userspage";
@@ -38,12 +39,13 @@ public class UsersController extends CommonController {
             return usersPage(model, pagable);
         }
 
-        if(filter.length() > 20) {
+        if (filter.length() > 20) {
             filter = filter.substring(0, 20);
         }
 
         model.put("filter", filter);
         model.put("page", userRepository.findByUserNameContainingOrderByRealmNameAscUserNameAsc(filter, pagable));
+        model.put("realms", userRepository.finaAllRealmNamesContaining(filter));
         model.put("authorizedusername", getAuthorizedUserName());
 
         return "userspage";

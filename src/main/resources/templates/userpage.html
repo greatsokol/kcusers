@@ -6,10 +6,10 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/bootstrap/bootstrap.min.css}">
+    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/style/bootstrap.min.css}">
     <title>KC User</title>
 </head>
-<body onload="timedRefresh(60000);">
+<body id="body">
 <div class="container">
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
@@ -94,16 +94,15 @@
         </div>
         <div class="mb-2 row">
             <div class="text-center">
-                <a aria-current="page" class="btn btn-outline-danger" onclick="httpPost()" th:if="${isAdmin==true}"
+                <a aria-current="page" class="btn btn-outline-danger" id="save-button" th:if="${isAdmin==true}"
                    th:text="#{front.userpage.button.save}"></a>
-                <a aria-current="page" class="btn btn-outline-success" onclick="history.back()"
+                <a aria-current="page" class="btn btn-outline-success" id="back-button"
                    th:text="#{front.userpage.button.back}"></a>
             </div>
         </div>
         <input id="_csrf" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}" type="hidden">
     </form>
 </div>
-<script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
 <script crossorigin="anonymous" th:src="@{/script/script.js}"></script>
 </body>
 </html>

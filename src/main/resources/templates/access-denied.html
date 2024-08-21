@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/bootstrap/bootstrap.min.css}">
+    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/style/bootstrap.min.css}">
     <title>Access denied</title>
 </head>
 <body>
@@ -21,11 +21,10 @@
         <h3 class="m-5" th:text="'' + ${adminroles}"></h3>
     </div>
 
-    <a aria-current="page" class="btn btn-outline-success" onclick="history.back()" th:text="#{front.accessdeniedpage.button.back}"></a>
+    <a aria-current="page" class="btn btn-outline-success" id="back-button"
+       th:text="#{front.accessdeniedpage.button.back}"></a>
     <a aria-current="page" class="btn btn-outline-info" href="/logout"
        th:text="#{front.accessdeniedpage.button.logout}+' ' + ${authorizedusername}"></a>
 </div>
-
-<script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
 </body>
 </html>

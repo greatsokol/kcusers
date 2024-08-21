@@ -7,10 +7,10 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/bootstrap/bootstrap.min.css}">
+    <link crossorigin="anonymous" rel="stylesheet" th:href="@{/style/bootstrap.min.css}">
     <title>KC User events</title>
 </head>
-<body onload="timedRefresh(60000);">
+<body id="body">
 <div class="container">
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
@@ -64,15 +64,14 @@
     </div>
     <div class="mb-2 row">
         <div class="text-center">
-            <a aria-current="page" class="btn btn-outline-success"
-               onclick="history.go(-2)"
-               th:text="#{front.eventspage.button.back}"></a>
+            <button aria-current="page" class="btn btn-outline-success"
+                    id="back-button"
+                    th:text="#{front.eventspage.button.back}"></button>
         </div>
         <!-- th:href="'/user/'+${realmName}+'/'+${userName}" -->
     </div>
 
 </div>
-<script crossorigin="anonymous" th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
 <script crossorigin="anonymous" th:src="@{/script/script.js}"></script>
 </body>
 </html>
