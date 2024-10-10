@@ -64,7 +64,7 @@ public class SecurityConfig {
                         )
                 )
                 .logout(logout -> logout
-                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout")) //skip logout confirmation
+                        //.logoutRequestMatcher(new AntPathRequestMatcher("/logout")) //skip logout confirmation
                         .logoutSuccessHandler(oidcLogoutSuccessHandler())
                         .logoutSuccessUrl("/")
                         .deleteCookies("JSESSIONID")
@@ -123,9 +123,12 @@ public class SecurityConfig {
         String payload = new String(decoder.decode(chunks[1]));
         var objectMapper = new ObjectMapper();
         try {
-            var jsonObj = objectMapper.readValue(payload, Object.class);
-            var claim = ((LinkedHashMap<String, Object>) jsonObj).get(claimFieldName);
-            return (List<String>)claim;
+            var claimObject = objectMapper.readValue(payload, Object.class);
+            var claimPath = claimFieldName.split("\\.");
+            for(var fieldName: claimPath) {
+                claimObject = ((LinkedHashMap<String, Object>) claimObject).get(fieldName);
+            }
+            return (List<String>)claimObject;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

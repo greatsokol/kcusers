@@ -30,5 +30,5 @@ public class Configurations {
         immune_minutes = minutes;
     }
 
-    public static String ROLES_TOKEN_CLAIM_NAME = "groups";
+    public static String ROLES_TOKEN_CLAIM_NAME = "realm_access.roles";
 }

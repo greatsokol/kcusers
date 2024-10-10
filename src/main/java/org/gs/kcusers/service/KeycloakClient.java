@@ -1,9 +1,9 @@
 package org.gs.kcusers.service;
 
-import jakarta.ws.rs.ForbiddenException;
-import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.ProcessingException;
+//import jakarta.ws.rs.ForbiddenException;
+//import jakarta.ws.rs.NotAuthorizedException;
+//import jakarta.ws.rs.NotFoundException;
+//import jakarta.ws.rs.ProcessingException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.gs.kcusers.configs.ProtectedUsers;
 import org.gs.kcusers.domain.Event;
@@ -24,6 +24,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ProcessingException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
