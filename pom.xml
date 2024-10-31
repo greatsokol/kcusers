@@ -88,6 +88,11 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.orbitz.consul</groupId>
+            <artifactId>consul-client</artifactId>
+            <version>1.5.1</version>
+        </dependency>
     </dependencies>
 
     <build>

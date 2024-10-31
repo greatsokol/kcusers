@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@ConfigurationProperties(prefix = "service.keycloakclient.inactivity")
+@ConfigurationProperties(prefix = "consul.service")
 @Data
-public class ProtectedUsers {
-    final private List<String> protectedusers = new ArrayList<>();
+public class ConsulTags {
+    final private List<String> tags = new ArrayList<>();
 }

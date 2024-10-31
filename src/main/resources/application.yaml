@@ -42,9 +42,9 @@ db:
 
 #-----------------------------------------------------------------------------
 front:
-  issuer-uri: https://keycloak.local/realms/master
+  issuer-uri: https://keycloak.local/realms/APIM
   client-id: kcusers_servlet_client
-  client-secret: ${clsec:CIs66oQuBCUh9aPPPk7sGnLLR4sVRb6b}
+  client-secret: ${clsec:pBK7LX5NvP3SBoVNUJNty4Cci3jRSNWC}
   userroles: user
   adminroles: admin
 
@@ -52,13 +52,13 @@ front:
 service:
   cron: 00 * * * * *
   keycloakclient:
-    realms: master,APIM,FINSTAR
+    realms: master,APIM,Finstar
     url: https://keycloak.local
     client:
       client-id: kcusers_service_client
-      client-secret: ${sclsec:zxKl4pqBEcFGas6W4HAWHDtMxyk8R9xJ}
+      client-secret: ${sclsec:4SHmwheAqTTtmdPeEmdrWM5lurouxrop}
     admin:
-      realm: master
+      realm: master # управление другими realm возможно только из master
       #login: admin
       #password: ${kсpwd:admin}
     inactivity:
@@ -68,3 +68,22 @@ service:
       days: 90
       immunityperiodminutes: 240
       dryrun: false
+
+#-----------------------------------------------------------------------------
+consul:
+  enabled: true
+  url: "http://localhost:8500"
+  acltoken: "1f57b9dc-e104-8843-519b-7f795bc8a364"
+  service:
+    id: "kcusers"
+    name: "kcusers"
+    host: "https://kcusers.local"
+    port: 443
+    delay: 10000
+    ttl: 15000
+    tags:
+      - APIM
+      - kcusers
+      - keycloak
+      - МС Управления пользователями
+    note: "kcusers alive and reachable"

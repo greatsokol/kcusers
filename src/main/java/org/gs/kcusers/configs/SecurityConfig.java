@@ -43,11 +43,14 @@ import static org.gs.kcusers.configs.Configurations.ROLES_TOKEN_CLAIM_NAME;
 public class SecurityConfig {
     Logger logger = LoggerFactory.getLogger(SecurityConfig.class.getName());
 
-    @Autowired
     ClientRegistrationRepository clientRegistrationRepository;
+    LoginRepository loginRepository;
 
     @Autowired
-    LoginRepository loginRepository;
+    SecurityConfig(ClientRegistrationRepository clientRegistrationRepository, LoginRepository loginRepository){
+        this.clientRegistrationRepository = clientRegistrationRepository;
+        this.loginRepository = loginRepository;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

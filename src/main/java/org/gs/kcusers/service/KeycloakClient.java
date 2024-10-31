@@ -170,7 +170,7 @@ public class KeycloakClient {
 
         try {
             logger.info("-- Looking for users of realm {} (skipping protected users {}) ",
-                    realmName, protectedUsers.getProtectedUsers().toString());
+                    realmName, protectedUsers.getProtectedusers().toString());
 
             users = keycloak
                     .realm(realmName)
@@ -178,7 +178,7 @@ public class KeycloakClient {
                     .list()
                     .stream()
                     // фильтруем пользователей, которые указаны в настройке protectedUsers
-                    .filter(userRepresentation -> !protectedUsers.getProtectedUsers().contains(userRepresentation.getUsername()))
+                    .filter(userRepresentation -> !protectedUsers.getProtectedusers().contains(userRepresentation.getUsername()))
                     .map(userRepresentation -> userPresentationToUser(keycloak, realmName, userRepresentation)
                     ).toList();
 
