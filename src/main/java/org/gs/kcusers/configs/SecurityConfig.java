@@ -30,6 +30,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -83,12 +84,16 @@ public class SecurityConfig {
 
             logger.info("Authentication success {} ({})",
                     principal.getPreferredUsername(), authentication.getAuthorities());
-            loginRepository.save(new Login(
-                    principal.getPreferredUsername(),
-                    principal.getAuthenticatedAt().toEpochMilli(),
-                    authDetails.getSessionId(),
-                    authDetails.getRemoteAddress() + " (s)")
-            );
+            try {
+                loginRepository.save(new Login(
+                        principal.getPreferredUsername(),
+                        principal.getAuthenticatedAt().toEpochMilli(),
+                        authDetails.getSessionId(),
+                        authDetails.getRemoteAddress() + " (s)")
+                );
+            } catch (Exception e) {
+                logger.error("Can not save login event: {}", e.getMessage());
+            }
             response.sendRedirect("/");
         };
     }
@@ -107,6 +112,7 @@ public class SecurityConfig {
             var authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
             //var roles = (List<String>) jwt.getClaimAsMap("realm_access").get("roles");
             var roles = jwt.getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
+            if (roles == null) roles = new ArrayList<>();
 
             return Stream.concat(authorities.stream(),
                             roles.stream()
