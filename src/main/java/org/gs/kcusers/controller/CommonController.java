@@ -67,9 +67,9 @@ public class CommonController {
                     map(GrantedAuthority::getAuthority).
                     toList();
         } else if (principalobject instanceof Jwt jwt) {
-            return jwt.getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
-            //getClaimAsMap("realm_access").
-            //get("roles");
+            return (List<String>) jwt.//getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
+                getClaimAsMap("realm_access").
+                get("roles");
         } else if (principalobject instanceof User user) {
             return user.getAuthorities().
                     stream().

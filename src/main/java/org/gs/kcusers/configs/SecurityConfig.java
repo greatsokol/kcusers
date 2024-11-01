@@ -22,12 +22,12 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.ArrayList;
@@ -48,9 +48,26 @@ public class SecurityConfig {
     LoginRepository loginRepository;
 
     @Autowired
-    SecurityConfig(ClientRegistrationRepository clientRegistrationRepository, LoginRepository loginRepository){
+    SecurityConfig(ClientRegistrationRepository clientRegistrationRepository, LoginRepository loginRepository) {
         this.clientRegistrationRepository = clientRegistrationRepository;
         this.loginRepository = loginRepository;
+    }
+
+    private static List<String> getRolesFromStringJwt(String jwt, String claimFieldName) {
+        String[] chunks = jwt.split("\\.");
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String payload = new String(decoder.decode(chunks[1]));
+        var objectMapper = new ObjectMapper();
+        try {
+            var claimObject = objectMapper.readValue(payload, Object.class);
+            var claimPath = claimFieldName.split("\\.");
+            for (var fieldName : claimPath) {
+                claimObject = ((LinkedHashMap<String, Object>) claimObject).get(fieldName);
+            }
+            return (List<String>) claimObject;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Bean
@@ -110,8 +127,7 @@ public class SecurityConfig {
         converter.setPrincipalClaimName("preferred_username");
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             var authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
-            //var roles = (List<String>) jwt.getClaimAsMap("realm_access").get("roles");
-            var roles = jwt.getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
+            var roles = (List<String>) jwt.getClaimAsMap("realm_access").get("roles");
             if (roles == null) roles = new ArrayList<>();
 
             return Stream.concat(authorities.stream(),
@@ -125,35 +141,17 @@ public class SecurityConfig {
         return converter;
     }
 
-    private static List<String> getRolesFromJwt(String jwt, String claimFieldName) {
-        String[] chunks = jwt.split("\\.");
-        Base64.Decoder decoder = Base64.getUrlDecoder();
-        //String header = new String(decoder.decode(chunks[0]));
-        String payload = new String(decoder.decode(chunks[1]));
-        var objectMapper = new ObjectMapper();
-        try {
-            var claimObject = objectMapper.readValue(payload, Object.class);
-            var claimPath = claimFieldName.split("\\.");
-            for(var fieldName: claimPath) {
-                claimObject = ((LinkedHashMap<String, Object>) claimObject).get(fieldName);
-            }
-            return (List<String>)claimObject;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Bean
     public OAuth2UserService<OidcUserRequest, OidcUser> oAuth2UserService() {
         var oidcUserService = new OidcUserService();
         return userRequest -> {
-            var realm_roles = getRolesFromJwt(
+            var realm_roles = getRolesFromStringJwt(
                     userRequest.getAccessToken().getTokenValue(),
                     ROLES_TOKEN_CLAIM_NAME
             );
 
             var oidcUser = oidcUserService.loadUser(userRequest);
-            if(realm_roles == null) {
+            if (realm_roles == null) {
                 realm_roles = oidcUser.getIdToken().getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
                 if (realm_roles == null) {
                     throw new AuthenticationServiceException("IdToken must contain \"" + ROLES_TOKEN_CLAIM_NAME + "\"");
