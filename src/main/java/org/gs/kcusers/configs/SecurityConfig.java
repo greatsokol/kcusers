@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.ArrayList;
@@ -84,9 +85,8 @@ public class SecurityConfig {
                         )
                 )
                 .logout(logout -> logout
-                        //.logoutRequestMatcher(new AntPathRequestMatcher("/logout")) //skip logout confirmation
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout")) //skip logout confirmation
                         .logoutSuccessHandler(oidcLogoutSuccessHandler())
-                        .logoutSuccessUrl("/")
                         .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true))
@@ -116,7 +116,9 @@ public class SecurityConfig {
 
     @Bean
     public OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
-        return new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        var handler = new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        handler.setPostLogoutRedirectUri("{baseScheme}://{baseHost}");
+        return handler;
     }
 
     @Bean
