@@ -4,7 +4,6 @@
 
 package org.gs.kcusers.configs;
 
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -14,8 +13,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.ws.rs.ServerErrorException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ConnectException;
 
 // should handle all exception for classes annotated with
@@ -30,31 +29,19 @@ public class AuthorizationDeniedExceptionRestControllerExceptionHandler {
 
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<String> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
-
-//        // below object should be serialized to json
-//        ErrorResponse errorResponse = new ErrorResponse() {
-//            @Override
-//            public HttpStatusCode getStatusCode() {
-//                return HttpStatus.FORBIDDEN;
-//            }
-//
-//            @Override
-//            public ProblemDetail getBody() {
-//                return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Access denied");
-//            }
-//        };
-
-        return new ResponseEntity<String>("{\"message\":\"FORBIDDEN. User must have user (" + userRoles +
+        return new ResponseEntity<>("{\"message\":\"FORBIDDEN. User must have user (" + userRoles +
                 ") or admin (" + adminRoles + ") roles.\"}", HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ConnectException.class)
-    public ResponseEntity<String> handleConnectException(ConnectException e, HttpServletResponse response) throws IOException {
-        response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        PrintWriter out = response.getWriter();
-        out.write("No connection to database: " + e.getMessage());
-
+    public ResponseEntity<String> handleConnectException(ConnectException e) throws IOException {
         String message = "No connection to database: " + e.getMessage();
-        return new ResponseEntity<String>("{\"message\":"+message+"\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("{\"message\":\"" + message + "\"}", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ServerErrorException.class)
+    public ResponseEntity<String> handleServerErrorException(ServerErrorException e) throws IOException {
+        String message = "No connection to keycloak: " + e.getMessage();
+        return new ResponseEntity<>("{\"message\":\"" + message + "\"}", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

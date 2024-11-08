@@ -10,11 +10,9 @@ import org.gs.kcusers.repositories.UserRepository;
 import org.gs.kcusers.service.KeycloakClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
-@EnableWebSecurity
 @RestController
 @RequestMapping("/api/user")
 public class UserApiContoller extends CommonController {
@@ -37,8 +35,7 @@ public class UserApiContoller extends CommonController {
 
         ObjectWriter ow = new ObjectMapper().writer();
         try {
-            var responseJson = ow.writeValueAsString(response);
-            return responseJson;
+            return ow.writeValueAsString(response);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

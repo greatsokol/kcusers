@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import javax.ws.rs.ServerErrorException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ConnectException;
@@ -31,5 +32,12 @@ public class AuthorizationDeniedExceptionControllerExceptionHandler {
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         PrintWriter out = response.getWriter();
         out.write("No connection to database: " + e.getMessage());
+    }
+
+    @ExceptionHandler(ServerErrorException.class)
+    public void handleServerErrorException(ServerErrorException e, HttpServletResponse response) throws IOException {
+        response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        PrintWriter out = response.getWriter();
+        out.write("No connection to keycloak: " + e.getMessage());
     }
 }

@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.gs.kcusers.configs.Configurations.ROLES_TOKEN_CLAIM_NAME;
-
-
 public class CommonController {
     @Value("${front.adminroles}")
     protected String adminRoles;
@@ -68,8 +65,8 @@ public class CommonController {
                     toList();
         } else if (principalobject instanceof Jwt jwt) {
             return (List<String>) jwt.//getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
-                getClaimAsMap("realm_access").
-                get("roles");
+                    getClaimAsMap("realm_access").
+                    get("roles");
         } else if (principalobject instanceof User user) {
             return user.getAuthorities().
                     stream().
