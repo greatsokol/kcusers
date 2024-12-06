@@ -230,6 +230,8 @@ public class KeycloakClient {
             }
 
             boolean userIsNotInImmunityPeriod = user.userIsNotInImmunityPeriod();
+            boolean userIsInactiveInImmunityPeriod = user.userIsInactiveInImmunityPeriod();
+
             if (user.getEnabled() && user.userIsOldAndInactive() && userIsNotInImmunityPeriod) {
                 // Блокировать пользоваеля, если:
                 // * пользователь старый,
@@ -238,8 +240,10 @@ public class KeycloakClient {
                 logger.info("User {} ({}) become inactive. Will be DISABLED.",
                         user.getUserName(), user.getRealmName());
                 disable = true;
-            } else if (user.getEnabled() && userIsNotInImmunityPeriod && user.getManuallyEnabledTime() != null) {
-                if (user.userIsInactiveInImmunityPeriod()) {
+            } else if (user.getEnabled()
+                    && (userIsNotInImmunityPeriod || !userIsInactiveInImmunityPeriod)
+                    && user.getManuallyEnabledTime() != null) {
+                if (userIsInactiveInImmunityPeriod) {
                     // Блокировать пользоваеля, если:
                     // * находится во временном включенном состоянии IMMUNITY_PERIOD_MINUTES минут
                     // * не залогинился за последние IMMUNITY_PERIOD_MINUTES минут

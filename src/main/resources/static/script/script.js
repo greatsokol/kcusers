@@ -2,10 +2,6 @@ function navigateToUserPage(el) {
     window.location = el.getAttribute('data');
 }
 
-function timedRefresh(timeoutPeriod) {
-    setTimeout("location.reload(true);", timeoutPeriod);
-}
-
 function httpPost() {
     let realm = document.getElementById("realmName").value;
     let user = document.getElementById('userName').value;
@@ -33,4 +29,6 @@ for (let i = 0; i < userRows.length; i++) {
     userRow.addEventListener("click", () => navigateToUserPage(userRow));
 }
 
-document.getElementById("body")?.addEventListener("onload", () => timedRefresh(30000));
+document.getElementById("body").onload = () => {
+    setTimeout(() => location.reload(), 15000);
+};
