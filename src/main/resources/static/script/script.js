@@ -30,5 +30,17 @@ for (let i = 0; i < userRows.length; i++) {
 }
 
 document.getElementById("body").onload = () => {
-    setTimeout(() => location.reload(), 15000);
+    setTimeout(() => location.reload(), 60000);
 };
+
+// const navigationType = performance.getEntriesByType("navigation")[0].type;
+// console.log(navigationType)
+// if(navigationType === "back_forward") { // always "reload"
+//     window.location.reload();
+// }
+
+window.addEventListener ('pageshow', function (event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});

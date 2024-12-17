@@ -4,6 +4,7 @@ package org.gs.kcusers.service;
 //import jakarta.ws.rs.NotAuthorizedException;
 //import jakarta.ws.rs.NotFoundException;
 //import jakarta.ws.rs.ProcessingException;
+
 import org.apache.http.conn.HttpHostConnectException;
 import org.gs.kcusers.configs.ProtectedUsers;
 import org.gs.kcusers.domain.Event;
@@ -169,16 +170,13 @@ public class KeycloakClient {
         List<User> users = null;
 
         try {
-            logger.info("-- Looking for users of realm {} (skipping protected users {}) ",
-                    realmName, protectedUsers.getProtectedusers().toString());
+            logger.info("-- Looking for users of realm {}", realmName);
 
             users = keycloak
                     .realm(realmName)
                     .users()
                     .list()
                     .stream()
-                    // фильтруем пользователей, которые указаны в настройке protectedUsers
-                    .filter(userRepresentation -> !protectedUsers.getProtectedusers().contains(userRepresentation.getUsername()))
                     .map(userRepresentation -> userPresentationToUser(keycloak, realmName, userRepresentation)
                     ).toList();
 
@@ -199,79 +197,108 @@ public class KeycloakClient {
         return users;
     }
 
-    private void processUsers(Keycloak keycloak, List<User> users) {
-        if (users == null) return;
+    private void addNewUser(User user) {
+        userRepository.save(user);// add new user
+        eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
+                "system", "add user from Keycloack", user.getEnabled()));
+    }
 
-        for (var user : users) {
-            boolean disable = false;
-            boolean forceUpdate = false;
-            User ourSavedUser = userRepository.findByUserNameAndRealmName(user.getUserName(), user.getRealmName());
-            if (ourSavedUser != null) {
-                // такой пользователь уже сохранен у нас в БД
-                disable = user.getEnabled() && !ourSavedUser.getEnabled();
-                if (disable) {
-                    // пользователь сохранен у нас как отключенный, а с сервера пришел как включенный
-                    // выключим его
-                    logger.info("Found already saved user {} ({}) as disabled. Will be DISABLED.",
-                            ourSavedUser.getUserName(), ourSavedUser.getRealmName());
-                }
+    private boolean forceUpdateUser(User ourSavedUser, User user) {
+        return ourSavedUser == null ||
+                !Objects.equals(ourSavedUser.getLastLogin(), user.getLastLogin()) ||
+                !Objects.equals(ourSavedUser.getUserId(), user.getUserId()) ||
+                !Objects.equals(ourSavedUser.getCreated(), user.getCreated());
+    }
 
-                forceUpdate = !Objects.equals(ourSavedUser.getLastLogin(), user.getLastLogin()) ||
-                        !Objects.equals(ourSavedUser.getUserId(), user.getUserId()) ||
-                        !Objects.equals(ourSavedUser.getCreated(), user.getCreated());
-
-                user.setEnabled(ourSavedUser.getEnabled());
-                user.setCreated(ourSavedUser.getCreated());
-            } else {
-                userRepository.save(user);// add new user
-                eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
-                        "system", "add user from Keycloack", user.getEnabled()));
-
+    private void processUser(Keycloak keycloak, User user) {
+        boolean disable = false;
+        boolean forceUpdate = false;
+        User ourSavedUser = userRepository.findByUserNameAndRealmName(user.getUserName(), user.getRealmName());
+        if (ourSavedUser != null) {
+            // такой пользователь уже сохранен у нас в БД
+            disable = user.getEnabled() && !ourSavedUser.getEnabled();
+            if (disable) {
+                // пользователь сохранен у нас как отключенный, а с сервера пришел как включенный
+                // выключим его
+                logger.info("Found already saved user {} ({}) as disabled. Will be DISABLED.",
+                        ourSavedUser.getUserName(), ourSavedUser.getRealmName());
             }
 
-            boolean userIsNotInImmunityPeriod = user.userIsNotInImmunityPeriod();
-            boolean userIsInactiveInImmunityPeriod = user.userIsInactiveInImmunityPeriod();
+            forceUpdate = forceUpdateUser(ourSavedUser, user);
 
-            if (user.getEnabled() && user.userIsOldAndInactive() && userIsNotInImmunityPeriod) {
+            user.setEnabled(ourSavedUser.getEnabled());
+            user.setCreated(ourSavedUser.getCreated());
+        } else {
+            addNewUser(user);
+        }
+
+        boolean userIsNotInImmunityPeriod = user.userIsNotInImmunityPeriod();
+        boolean userIsInactiveInImmunityPeriod = user.userIsInactiveInImmunityPeriod();
+
+        if (user.getEnabled() && user.userIsOldAndInactive() && userIsNotInImmunityPeriod) {
+            // Блокировать пользоваеля, если:
+            // * пользователь старый,
+            // * не логинился в течении INACTIVITY_DAYS дней
+            // * не находится во временном включенном состоянии IMMUNITY_PERIOD_MINUTES минут
+            logger.info("User {} ({}) become inactive. Will be DISABLED.",
+                    user.getUserName(), user.getRealmName());
+            disable = true;
+        } else if (user.getEnabled()
+                && (userIsNotInImmunityPeriod || !userIsInactiveInImmunityPeriod)
+                && user.getManuallyEnabledTime() != null) {
+            if (userIsInactiveInImmunityPeriod) {
                 // Блокировать пользоваеля, если:
-                // * пользователь старый,
-                // * не логинился в течении INACTIVITY_DAYS дней
-                // * не находится во временном включенном состоянии IMMUNITY_PERIOD_MINUTES минут
-                logger.info("User {} ({}) become inactive. Will be DISABLED.",
+                // * находится во временном включенном состоянии IMMUNITY_PERIOD_MINUTES минут
+                // * не залогинился за последние IMMUNITY_PERIOD_MINUTES минут
+                logger.info("User {} ({}) not logged in in immunity period. Will be DISABLED.",
                         user.getUserName(), user.getRealmName());
                 disable = true;
-            } else if (user.getEnabled()
-                    && (userIsNotInImmunityPeriod || !userIsInactiveInImmunityPeriod)
-                    && user.getManuallyEnabledTime() != null) {
-                if (userIsInactiveInImmunityPeriod) {
-                    // Блокировать пользоваеля, если:
-                    // * находится во временном включенном состоянии IMMUNITY_PERIOD_MINUTES минут
-                    // * не залогинился за последние IMMUNITY_PERIOD_MINUTES минут
-                    logger.info("User {} ({}) not logged in in immunity period. Will be DISABLED.",
-                            user.getUserName(), user.getRealmName());
-                    disable = true;
-                } else {
-                    // Разблокировать пользоваеля
-                    logger.info("User {} ({}) become active. Will be ENABLED.", user.getUserName(), user.getRealmName());
-                    user.setManuallyEnabledTime(null);
-                    user.setCommentEnabledAfterBecomeActive();
-                    userRepository.save(user);
-                    eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
-                            "system", user.getComment(), user.getEnabled()));
-                }
-            }
-
-            if (forceUpdate) {
+            } else {
+                // Разблокировать пользоваеля
+                logger.info("User {} ({}) become active. Will be ENABLED.", user.getUserName(), user.getRealmName());
+                user.setManuallyEnabledTime(null);
+                user.setCommentEnabledAfterBecomeActive();
                 userRepository.save(user);
+                eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
+                        "system", user.getComment(), user.getEnabled()));
             }
+        }
 
-            if (disable) {
-                disableUser(keycloak, user);
-            }
+        if (forceUpdate) {
+            userRepository.save(user);
+        }
+
+        if (disable) {
+            disableUser(keycloak, user);
         }
     }
 
+    private void justSaveUser(User user) {
+        User ourSavedUser = userRepository.findByUserNameAndRealmName(user.getUserName(), user.getRealmName());
+        boolean forceUpdate = forceUpdateUser(ourSavedUser, user);
+        if (forceUpdate) {
+            userRepository.save(user);
+            logger.info("Updated user information {} ({})", user.getUserName(), user.getRealmName());
+        }
+    }
+
+    private void processUsers(Keycloak keycloak, List<User> users) {
+        if (users == null) return;
+        // проверка незащищенных пользователей (с возможной блокировкой):
+        users.stream()
+                .filter(this::userIsUnprotected)
+                .forEach(user -> processUser(keycloak, user));
+
+        // проверка защищенных пользователей (просто сохранение изменений):
+        users.stream()
+                .filter(this::userIsProtected)
+                .forEach(this::justSaveUser);
+    }
+
     private boolean updateUser(Keycloak keycloak, User user, String admLogin) {
+        if (userIsProtected(user)) {
+            return false;
+        }
         try {
             UsersResource usersResource = keycloak.realm(user.getRealmName()).users();
             UserResource userResource = usersResource.get(user.getUserId());
@@ -298,7 +325,18 @@ public class KeycloakClient {
         return false;
     }
 
+    private boolean userIsProtected(User user) {
+        return protectedUsers.getProtectedusers().contains(user.getUserName());
+    }
+
+    private boolean userIsUnprotected(User user) {
+        return !protectedUsers.getProtectedusers().contains(user.getUserName());
+    }
+
     private void disableUser(Keycloak keycloak, User user) {
+        if (userIsProtected(user)) {
+            return;
+        }
         user.setEnabled(false);
         user.setManuallyEnabledTime(null);
         user.setCommentDisabledForInactivity();
@@ -307,6 +345,9 @@ public class KeycloakClient {
     }
 
     public boolean updateUserFromController(User user, String admLogin) {
+        if (userIsProtected(user)) {
+            return false;
+        }
         try (Keycloak keycloak = buildKeycloak()) {
             return updateUser(keycloak, user, admLogin);
         }
