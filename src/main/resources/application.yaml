@@ -1,3 +1,9 @@
+keyStore:
+  path: classpath:sokolov.personal.p12
+  type: PKCS12
+  password: 1979
+
+
 spring:
   security:
     oauth2:
@@ -30,9 +36,9 @@ spring:
 server:
   port: 9000
   ssl:
-    certificate: "classpath:any.local.crt"
-    certificate-private-key: "classpath:any.local.key"
-
+    certificate: "classpath:localhost.crt"
+    certificate-private-key: "classpath:localhost.key"
+    client-auth: need
 
 #-----------------------------------------------------------------------------
 db:
@@ -71,7 +77,7 @@ service:
 
 #-----------------------------------------------------------------------------
 consul:
-  enabled: true
+  enabled: false
   url: "http://localhost:8500"
   acltoken: "1f57b9dc-e104-8843-519b-7f795bc8a364"
   service:

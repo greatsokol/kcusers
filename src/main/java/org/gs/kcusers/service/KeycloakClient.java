@@ -11,7 +11,10 @@ import org.gs.kcusers.domain.Event;
 import org.gs.kcusers.domain.User;
 import org.gs.kcusers.repositories.EventRepository;
 import org.gs.kcusers.repositories.UserRepository;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.ClientBuilderWrapper;
+import org.keycloak.admin.client.JacksonProvider;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.UserResource;
@@ -25,10 +28,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.net.ssl.SSLContext;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -96,11 +101,19 @@ public class KeycloakClient {
         }
         if (KEYCLOAK_ADMIN_PASSWORD != null && !KEYCLOAK_ADMIN_PASSWORD.isEmpty()
                 && KEYCLOAK_ADMIN_LOGIN != null && !KEYCLOAK_ADMIN_LOGIN.isEmpty()) {
+
             // password auth
             builder
                     .grantType(OAuth2Constants.PASSWORD)
                     .username(KEYCLOAK_ADMIN_LOGIN)
                     .password(KEYCLOAK_ADMIN_PASSWORD);
+        }
+
+        // set ssl context to RESTEasy client
+        try {
+            builder.resteasyClient((ResteasyClient) (ClientBuilderWrapper.create(SSLContext.getDefault(), false).register(JacksonProvider.class, 100)).build());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
 
         //else throw new IllegalArgumentException("Invalid keycloak admin or password, or secret");
