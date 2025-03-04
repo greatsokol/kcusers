@@ -20,13 +20,13 @@ import static org.springframework.util.ResourceUtils.isUrl;
 public class KeyStoreEnvironmentPropertiesSetter {
     private static final Logger logger = LoggerFactory.getLogger(KeyStoreEnvironmentPropertiesSetter.class);
 
-    @Value("${keyStore.path}:#{null}")
+    @Value("${keyStore.path:#{null}}")
     String path;
 
-    @Value("${keyStore.type}:#{null}")
+    @Value("${keyStore.type:#{null}}")
     String type;
 
-    @Value("${keyStore.password}:#{null}")
+    @Value("${keyStore.password:#{null}}")
     String password;
 
     @PostConstruct
@@ -37,7 +37,7 @@ public class KeyStoreEnvironmentPropertiesSetter {
                     "keyStoreType: '{}', " +
                     "keyStorePassword: '{}'", path, type, password);
             if (isUrl(path)) {
-                absolutePath = getFile(path).getPath();
+                absolutePath = getFile(absolutePath).getPath();
             }
             System.setProperty("javax.net.ssl.keyStore", absolutePath);
             System.setProperty("javax.net.ssl.keyStoreType", type);
