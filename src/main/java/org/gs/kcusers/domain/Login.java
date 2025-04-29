@@ -14,7 +14,7 @@ import java.util.Objects;
 @Data
 @AllArgsConstructor
 @IdClass(Login.LoginPK.class)
-@Table(name = "logins")
+@Table(name = "logins", schema = "kcusers")
 public class Login {
     @Id
     String userName;

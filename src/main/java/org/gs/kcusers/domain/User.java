@@ -23,7 +23,7 @@ import java.util.Objects;
 @Data
 @AllArgsConstructor
 @IdClass(User.UserPK.class)
-@Table(name = "users")
+@Table(name = "users", schema = "kcusers")
 public class User {
     private static Logger logger = LoggerFactory.getLogger(User.class);
 

@@ -42,7 +42,7 @@ server:
 
 #-----------------------------------------------------------------------------
 db:
-  url: jdbc:postgresql://localhost:5433/postgres?currentSchema=kcusers
+  url: jdbc:postgresql://localhost:5433/postgres?currentSchema
   username: postgres
   password: ${pgpwd:admin}
 

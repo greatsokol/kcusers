@@ -15,7 +15,7 @@ import java.util.Objects;
 @Data
 @AllArgsConstructor
 @IdClass(Event.EventPK.class)
-@Table(name = "events")
+@Table(name = "events", schema = "kcusers")
 public class Event {
 
     @Id
