@@ -28,17 +28,22 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
+import java.io.FileNotFoundException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import static org.springframework.util.ResourceUtils.getFile;
+import static org.springframework.util.ResourceUtils.isUrl;
 
 @Component
 @EnableScheduling
@@ -76,6 +81,18 @@ public class KeycloakClient {
     @Value("${service.keycloakclient.inactivity.dryrun}")
     private boolean KEYCLOAK_DRY_RUN;
 
+    @Value("${service.keycloakclient.mtls.enabled:false}")
+    boolean mtlsEnabled;
+
+    @Value("${service.keycloakclient.mtls.keyStore.path:#{null}}")
+    String path;
+
+    @Value("${service.keycloakclient.mtls.keyStore.type:#{null}}")
+    String type;
+
+    @Value("${service.keycloakclient.mtls.keyStore.password:#{null}}")
+    String password;
+
     public KeycloakClient(@Value("${service.cron}") String cron,
                           ProtectedUsers protectedUsers,
                           UserRepository userRepository,
@@ -84,6 +101,32 @@ public class KeycloakClient {
         this.protectedUsers = protectedUsers;
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
+    }
+
+    @PostConstruct
+    public void setMtlsEnvironmentProperties() throws FileNotFoundException {
+        if (!mtlsEnabled) {
+            logger.info("MTLS is disabled");
+            return;
+        } else {
+            logger.info("MTLS is enabled");
+        }
+        if (path != null && !path.isEmpty() && type != null && !type.isEmpty()) {
+            String absolutePath = path;
+            logger.info("MTLS properties set: keyStore: '{}', " +
+                    "keyStoreType: '{}', " +
+                    "keyStorePassword: '{}'", path, type, "****");
+            if (isUrl(path)) {
+                absolutePath = getFile(absolutePath).getPath();
+            }
+
+            System.setProperty("javax.net.ssl.keyStoreType", type);
+            System.setProperty("javax.net.ssl.keyStore", absolutePath);
+            System.setProperty("javax.net.ssl.keyStorePassword", password);
+
+        } else {
+            logger.info("MTLS properties NOT set. Some parameters are empty.");
+        }
     }
 
     private Keycloak buildKeycloak() {

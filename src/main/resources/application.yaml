@@ -74,6 +74,12 @@ service:
       days: 90
       immunityperiodminutes: 240
       dryrun: false
+    mtls:
+      enabled: false
+      keyStore:
+        path: classpath:sokolov.personal.p12
+        type: PKCS12
+        password: 1979
 
 #-----------------------------------------------------------------------------
 consul:
