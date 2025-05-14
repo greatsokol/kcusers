@@ -1,7 +1,6 @@
 package org.gs.kcusers.configs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gs.kcusers.domain.Login;
 import org.gs.kcusers.repositories.LoginRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,21 +11,16 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
-import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 
@@ -38,18 +32,19 @@ import java.util.stream.Stream;
 
 import static org.gs.kcusers.configs.Configurations.ROLES_TOKEN_CLAIM_NAME;
 
+
 @Configuration
-@EnableWebSecurity
+//@EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfig {
     Logger logger = LoggerFactory.getLogger(SecurityConfig.class.getName());
 
-    ClientRegistrationRepository clientRegistrationRepository;
+    //ClientRegistrationRepository clientRegistrationRepository;
     LoginRepository loginRepository;
 
     @Autowired
-    SecurityConfig(ClientRegistrationRepository clientRegistrationRepository, LoginRepository loginRepository) {
-        this.clientRegistrationRepository = clientRegistrationRepository;
+    SecurityConfig(/*ClientRegistrationRepository clientRegistrationRepository,*/ LoginRepository loginRepository) {
+        //this.clientRegistrationRepository = clientRegistrationRepository;
         this.loginRepository = loginRepository;
     }
 
@@ -73,53 +68,55 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-        http.oauth2Login(Customizer.withDefaults());
+        //http.oauth2Login(Customizer.withDefaults());
 
         return http
                 .authorizeHttpRequests(req -> req
                         .requestMatchers("/metrics").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2Login(login -> login.successHandler(authenticationSuccessHandler()))
+                        .anyRequest().authenticated()
+                )
+//                .x509(configurer -> {
+//                    //var filter = new X509AuthenticationFilter();
+////                    var extractor = new X509PrincipalExtractor();
+////                    filter.setPrincipalExtractor(new X509PrincipalExtractor() {
+////                        @Override
+////                        public Object extractPrincipal(X509Certificate cert) {
+////                            return cert.get;
+////                        }
+////                    });
+//                    //configurer.x509AuthenticationFilter(filter);
+//                    //configurer.subjectPrincipalRegex("CN=(.*?)(?:,|$)");
+//                    configurer.authenticationUserDetailsService(new AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken>() {
+//                        @Override
+//                        public UserDetails loadUserDetails(PreAuthenticatedAuthenticationToken token) throws UsernameNotFoundException {
+//                            if(token.getPrincipal().equals("localhost")) {
+//                                return token.getDetails()
+//                            }
+//                            return null;
+//                        }
+//                    });
+//                    //configurer.x509PrincipalExtractor(new SubjectDnX509PrincipalExtractor());
+//                })
+                //.oauth2Login(login -> login.successHandler(new AuthSuccessHandler(loginRepository)))
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(
                                 request -> new CorsConfiguration().applyPermitDefaultValues()
                         )
                 )
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout")) //skip logout confirmation
-                        .logoutSuccessHandler(oidcLogoutSuccessHandler())
+                        //.logoutSuccessHandler(oidcLogoutSuccessHandler())
                         .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true))
                 .build();
     }
 
-    private AuthenticationSuccessHandler authenticationSuccessHandler() {
-        return (request, response, authentication) -> {
-            DefaultOidcUser principal = (DefaultOidcUser) authentication.getPrincipal();
-            WebAuthenticationDetails authDetails = (WebAuthenticationDetails) authentication.getDetails();
-
-            logger.info("Authentication success {} ({})",
-                    principal.getPreferredUsername(), authentication.getAuthorities());
-            try {
-                loginRepository.save(new Login(
-                        principal.getPreferredUsername(),
-                        principal.getAuthenticatedAt().toEpochMilli(),
-                        authDetails.getSessionId(),
-                        authDetails.getRemoteAddress() + " (s)")
-                );
-            } catch (Exception e) {
-                logger.error("Can not save login event: {}", e.getMessage());
-            }
-            response.sendRedirect("/");
-        };
-    }
-
-    @Bean
-    public OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
-        var handler = new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        handler.setPostLogoutRedirectUri("{baseScheme}://{baseHost}");
-        return handler;
-    }
+//    @Bean
+//    public OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
+//        var handler = new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+//        handler.setPostLogoutRedirectUri("{baseScheme}://{baseHost}");
+//        return handler;
+//    }
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
