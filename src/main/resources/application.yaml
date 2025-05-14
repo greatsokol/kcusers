@@ -33,11 +33,13 @@ server:
   ssl:
 #    certificate: "classpath:localhost.crt"
 #    certificate-private-key: "classpath:localhost.key"
-    client-auth: need
-    trust-certificate: classpath:localhost.crt
-    key-store: classpath:sokolov.personal.p12
+    key-store: classpath:localhost.p12
     key-store-type: PKCS12
     key-store-password: 1979
+
+    client-auth: need
+    trust-certificate: classpath:localhost.crt
+
 
 
 #-----------------------------------------------------------------------------
@@ -105,8 +107,14 @@ vault:
   enabled: true
   host: localhost
   port: 8200
-  certificate: classpath:localhost.crt
-  key: classpath:localhost.key
+  ssl:
+    # store/cert
+    type: store
+    key-store: classpath:localhost.p12
+    key-store-type: PKCS12
+    key-store-password: 1979
+    #certificate: classpath:localhost.crt
+    #key: classpath:localhost.key
   engines:
     apim:
       kcusers:

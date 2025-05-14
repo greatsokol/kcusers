@@ -30,11 +30,23 @@ public class VaultConfiguration {
     @Value("${vault.port:-1}")
     int port;
 
-    @Value("${vault.certificate:#{null}}")
-    String certificatePath;
+    @Value("${vault.ssl.type:#{null}}")
+    String sslType;
 
-    @Value("${vault.key:#{null}}")
-    String keyPath;
+    @Value("${vault.ssl.certificate:#{null}}")
+    String sslCertificate;
+
+    @Value("${vault.ssl.key:#{null}}")
+    String sslKeyPath;
+
+    @Value("${vault.ssl.key-store:#{null}}")
+    String sslKeyStore;
+
+    @Value("${vault.ssl.key-store-type:#{null}}")
+    String sslKeyStoreType;
+
+    @Value("${vault.ssl.key-store-password:#{null}}")
+    String sslKeyStorePassword;
 
     private final VaultEngines engines;
 
@@ -49,21 +61,18 @@ public class VaultConfiguration {
             logger.info("Vault: Not enabled");
             return -1;
         }
-
-        if (host == null || host.isEmpty()) throw new RuntimeException("Vault \"host\" not specified");
-        if (port < 0) throw new RuntimeException("Vault \"port\" not specified");
-        if (certificatePath == null || certificatePath.isEmpty())
-            throw new RuntimeException("Vault certificate path not specified");
-        if (keyPath == null || keyPath.isEmpty()) throw new RuntimeException("Vault \"key\" path not specified");
-        if (engines == null || engines.isEmpty()) throw new RuntimeException("Vault \"values\" not specified");
-
+        checkSettings();
         logger.info("Vault: Enabled at {}:{}", host, port);
 
         try {
             var vaultEndpoint = VaultEndpoint.create(host, port);
             var vaultRestTemplate = RestTemplateBuilder
                     .builder()
-                    .requestFactory(new VaultClientHttpRequestFactory(certificatePath, keyPath))
+                    .requestFactory(
+                            sslType.equalsIgnoreCase("store")
+                                    ? new VaultClientHttpRequestFactoryPkcs(sslKeyStore, sslKeyStorePassword)
+                                    : new VaultClientHttpRequestFactoryCrt(sslCertificate, sslKeyPath)
+                    )
                     .endpointProvider(SimpleVaultEndpointProvider.of(vaultEndpoint)).build();
             var vaultOptions = ClientCertificateAuthenticationOptions.builder().build();
             var auth = new ClientCertificateAuthentication(vaultOptions, vaultRestTemplate);
@@ -100,5 +109,31 @@ public class VaultConfiguration {
         String value = (String) Objects.requireNonNull(data.get(vaultValueKey));
         logger.info("Vault: Loaded \"{}\" from Vault", vaultValueKey);
         System.setProperty(settingName, value);
+    }
+
+    private void checkSettings() {
+        if (host == null || host.isEmpty()) throw new RuntimeException("Vault \"host\" not specified");
+        if (port < 0) throw new RuntimeException("Vault: \"port\" not specified");
+
+        if (sslType == null || sslType.isEmpty())
+            throw new RuntimeException("Vault: \"ssl.type\" not specified");
+
+        if (!sslType.equalsIgnoreCase("store") && !sslType.equalsIgnoreCase("cert"))
+            throw new RuntimeException("Vault: \"ssl.type\" should be \"store\" or \"cert\"");
+
+        if (sslType.equalsIgnoreCase("store")) {
+            if (sslKeyStore == null || sslKeyStore.isEmpty())
+                throw new RuntimeException("Vault \"ssl.key-store\" not specified");
+            if (sslKeyStoreType == null || sslKeyStoreType.isEmpty())
+                throw new RuntimeException("Vault \"ssl.key-store-type\" not specified");
+            if (sslKeyStorePassword == null || sslKeyStorePassword.isEmpty())
+                throw new RuntimeException("Vault \"ssl.key-store-password\" not specified");
+        } else {
+            if (sslCertificate == null || sslCertificate.isEmpty())
+                throw new RuntimeException("Vault \"ssl.certificate\" not specified");
+            if (sslKeyPath == null || sslKeyPath.isEmpty())
+                throw new RuntimeException("Vault \"ssl.key\" not specified");
+        }
+        if (engines == null || engines.isEmpty()) throw new RuntimeException("Vault \"engines\" not specified");
     }
 }

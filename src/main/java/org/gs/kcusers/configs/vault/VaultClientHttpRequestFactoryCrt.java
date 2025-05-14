@@ -22,15 +22,12 @@ import java.security.cert.X509Certificate;
 import static org.springframework.util.ResourceUtils.getFile;
 import static org.springframework.util.ResourceUtils.isUrl;
 
-public class VaultClientHttpRequestFactory extends HttpComponentsClientHttpRequestFactory {
+public class VaultClientHttpRequestFactoryCrt extends HttpComponentsClientHttpRequestFactory {
     private static final String keyStorePsw = "";
 
-    public VaultClientHttpRequestFactory(
+    public VaultClientHttpRequestFactoryCrt(
             String certificateFileName,
-            String keyFileName//,
-            //String keyPassword,
-            //String user,
-            //String password
+            String keyFileName
     ) {
         try {
             var keyStore = loadKeyStoreFromCrtAndKey(certificateFileName, keyFileName);
@@ -41,17 +38,6 @@ public class VaultClientHttpRequestFactory extends HttpComponentsClientHttpReque
             var cm = PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(sslConFactory).build();
             var httpClient = HttpClients.custom().setConnectionManager(cm).build();
             setHttpClient(httpClient);
-            //ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-            //setRequestFactory(requestFactory);
-
-//        String basicAuth = "Basic " + Base64.getEncoder().encodeToString((user + ":" + password).getBytes());
-//        var list = new ArrayList<ClientHttpRequestInterceptor>();
-//        list.add((request, body, execution) -> {
-//            request.getHeaders().add("Authorization", basicAuth);
-//            return execution.execute(request, body);
-//        });
-//
-//        setInterceptors(list);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -64,12 +50,10 @@ public class VaultClientHttpRequestFactory extends HttpComponentsClientHttpReque
 
         try (var certInput = getFileFromResource(certificateFileName);
              var keyInput = getFileFromResource(keyFileName)
-             //InputStream caInput = new FileInputStream(CaPath);
         ) {
 
             var certFactory = CertificateFactory.getInstance("X.509");
             var cert = (X509Certificate) certFactory.generateCertificate(certInput);
-            //X509Certificate ca = (X509Certificate) certFactory.generateCertificate(caInput);
 
             // Load private key from PEM file
             var privateKey = readPrivateKeyFromKeyFile(keyInput);
