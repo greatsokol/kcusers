@@ -1,9 +1,3 @@
-keyStore:
-  path: classpath:sokolov.personal.p12
-  type: PKCS12
-  password: 1979
-
-
 spring:
   security:
     oauth2:
@@ -15,16 +9,17 @@ spring:
           keycloak:
             issuer-uri: ${front.issuer-uri}
             user-name-attribute: preferred_username
-        registration:
-          keycloak:
-            client-id: ${front.client-id}
-            client-secret: ${front.client-secret}
-            scope: openid
-  jpa:
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+  #        registration:
+  #          keycloak:
+  #            client-id: ${front.client-id}
+  #            client-secret: ${front.client-secret}
+  #            scope: openid
+
+  #  jpa:
+  #    show-sql: false
+  #    properties:
+  #      hibernate:
+  #        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -36,21 +31,27 @@ spring:
 server:
   port: 9000
   ssl:
-    certificate: "classpath:localhost.crt"
-    certificate-private-key: "classpath:localhost.key"
+#    certificate: "classpath:localhost.crt"
+#    certificate-private-key: "classpath:localhost.key"
     client-auth: need
+    trust-certificate: classpath:localhost.crt
+    key-store: classpath:sokolov.personal.p12
+    key-store-type: PKCS12
+    key-store-password: 1979
+
 
 #-----------------------------------------------------------------------------
 db:
-  url: jdbc:postgresql://localhost:5433/postgres?currentSchema
+  #  url: jdbc:postgresql://localhost:5432/kcusers?currentSchema=kcusers
+  url: jdbc:postgresql://localhost:5432/kcusers
   username: postgres
-  password: ${pgpwd:admin}
+  #password: ${pgpwd:admin}
 
 #-----------------------------------------------------------------------------
 front:
   issuer-uri: https://keycloak.local/realms/APIM
   client-id: kcusers_servlet_client
-  client-secret: ${clsec:pBK7LX5NvP3SBoVNUJNty4Cci3jRSNWC}
+  #client-secret: ${clsec:pBK7LX5NvP3SBoVNUJNty4Cci3jRSNWC}
   userroles: user
   adminroles: admin
 
@@ -99,3 +100,20 @@ consul:
       - keycloak
       - МС Управления пользователями
     note: "kcusers alive and reachable"
+
+vault:
+  enabled: true
+  host: localhost
+  port: 8200
+  certificate: classpath:localhost.crt
+  key: classpath:localhost.key
+  engines:
+    apim:
+      kcusers:
+        db-password: db.password
+        service-keycloak-client-secret: service.keycloakclient.client.client-secret
+        front-client-secret: front.client-secret
+        not-available: exception
+    dev:
+      some-secret:
+        some-setting: some-value-path
