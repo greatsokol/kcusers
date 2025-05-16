@@ -73,6 +73,7 @@ public class SecurityConfig {
         return http
                 .authorizeHttpRequests(req -> req
                         .requestMatchers("/metrics").permitAll()
+                        .requestMatchers("/health").permitAll()
                         .anyRequest().authenticated()
                 )
 //                .x509(configurer -> {

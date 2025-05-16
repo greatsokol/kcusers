@@ -4,6 +4,7 @@
 
 package org.gs.kcusers.controller;
 
+import org.gs.kcusers.controller.api.UserApiContoller;
 import org.gs.kcusers.domain.User;
 import org.gs.kcusers.repositories.UserRepository;
 import org.gs.kcusers.service.KeycloakClient;

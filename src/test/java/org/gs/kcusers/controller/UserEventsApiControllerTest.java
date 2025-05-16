@@ -4,6 +4,7 @@
 
 package org.gs.kcusers.controller;
 
+import org.gs.kcusers.controller.api.UserEventsApiController;
 import org.gs.kcusers.domain.Event;
 import org.gs.kcusers.repositories.EventRepository;
 import org.junit.jupiter.api.BeforeEach;

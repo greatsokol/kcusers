@@ -2,8 +2,9 @@
  * Created by Eugene Sokolov 14.06.2024, 10:20.
  */
 
-package org.gs.kcusers.controller;
+package org.gs.kcusers.controller.servlet;
 
+import org.gs.kcusers.controller.CommonController;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;

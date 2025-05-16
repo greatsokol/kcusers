@@ -1,10 +1,11 @@
-package org.gs.kcusers.controller;
+package org.gs.kcusers.controller.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.gs.kcusers.controller.CommonController;
 import org.gs.kcusers.domain.User;
 import org.gs.kcusers.repositories.UserRepository;
 import org.gs.kcusers.service.KeycloakClient;

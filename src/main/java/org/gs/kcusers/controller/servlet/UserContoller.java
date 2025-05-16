@@ -1,5 +1,6 @@
-package org.gs.kcusers.controller;
+package org.gs.kcusers.controller.servlet;
 
+import org.gs.kcusers.controller.CommonController;
 import org.gs.kcusers.domain.User;
 import org.gs.kcusers.repositories.UserRepository;
 import org.gs.kcusers.service.KeycloakClient;
@@ -20,6 +21,7 @@ public class UserContoller extends CommonController {
 
     @Autowired
     public UserContoller(KeycloakClient keycloakClient) {
+        super();
         this.keycloakClient = keycloakClient;
     }
 

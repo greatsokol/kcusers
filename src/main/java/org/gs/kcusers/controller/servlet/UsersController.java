@@ -1,5 +1,6 @@
-package org.gs.kcusers.controller;
+package org.gs.kcusers.controller.servlet;
 
+import org.gs.kcusers.controller.CommonController;
 import org.gs.kcusers.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;

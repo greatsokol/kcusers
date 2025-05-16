@@ -4,6 +4,7 @@
 
 package org.gs.kcusers.controller;
 
+import org.gs.kcusers.controller.api.LoginsApiController;
 import org.gs.kcusers.domain.Login;
 import org.gs.kcusers.repositories.LoginRepository;
 import org.junit.jupiter.api.BeforeEach;

@@ -4,6 +4,7 @@
 
 package org.gs.kcusers.controller;
 
+import org.gs.kcusers.controller.servlet.UsersController;
 import org.gs.kcusers.domain.User;
 import org.gs.kcusers.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

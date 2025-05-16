@@ -2,13 +2,14 @@
  * Created by Eugene Sokolov 27.06.2024, 10:26.
  */
 
-package org.gs.kcusers.controller;
+package org.gs.kcusers.controller.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.gs.kcusers.controller.CommonController;
 import org.gs.kcusers.domain.Login;
 import org.gs.kcusers.repositories.LoginRepository;
 import org.slf4j.Logger;

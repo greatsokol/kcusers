@@ -22,7 +22,7 @@ public class CommonController {
     @Value("${front.userroles}")
     protected String userRoles;
 
-    CommonController() {
+    protected CommonController() {
 
     }
 

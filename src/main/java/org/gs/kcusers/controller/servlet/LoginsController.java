@@ -2,8 +2,9 @@
  * Created by Eugene Sokolov 27.06.2024, 10:26.
  */
 
-package org.gs.kcusers.controller;
+package org.gs.kcusers.controller.servlet;
 
+import org.gs.kcusers.controller.CommonController;
 import org.gs.kcusers.repositories.LoginRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
