@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Configurations {
-    public static String ROLES_TOKEN_CLAIM_NAME = "realm_access.roles";
+    public static String ROLES_TOKEN_CLAIM_NAME = "groups";//"realm_access.roles";
 
     private static int inactivity_days;
 
