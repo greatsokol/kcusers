@@ -23,9 +23,7 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${db.url}
-    username: ${db.username}
-    password: ${db.password}
+    url: jdbc:postgresql://localhost:5432/kcusers
 
 #-----------------------------------------------------------------------------
 server:
@@ -41,18 +39,10 @@ server:
     trust-certificate: classpath:localhost.crt
 
 
-
-#-----------------------------------------------------------------------------
-db:
-  #  url: jdbc:postgresql://localhost:5432/kcusers?currentSchema=kcusers
-  url: jdbc:postgresql://localhost:5432/kcusers
-  username: postgres
-  #password: ${pgpwd:admin}
-
 #-----------------------------------------------------------------------------
 front:
   issuer-uri: https://keycloak.local/realms/APIM
-  client-id: kcusers_servlet_client
+  #client-id: kcusers_servlet_client
   #client-secret: ${clsec:pBK7LX5NvP3SBoVNUJNty4Cci3jRSNWC}
   userroles: user
   adminroles: admin
@@ -115,13 +105,11 @@ vault:
     key-store-password: 1979
     #certificate: classpath:localhost.crt
     #key: classpath:localhost.key
-  engines:
+  paths:
     apim:
-      kcusers:
-        db-password: db.password
-        service-keycloak-client-secret: service.keycloakclient.client.client-secret
-        front-client-secret: front.client-secret
-        not-available: exception
-    dev:
-      some-secret:
-        some-setting: some-value-path
+      apps:
+        config:
+          kcusers:
+            db-username: spring.datasource.username
+            db-password: spring.datasource.password
+            service-keycloak-client-secret: service.keycloakclient.client.client-secret

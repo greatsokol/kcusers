@@ -14,6 +14,7 @@ import org.springframework.vault.client.VaultEndpoint;
 import org.springframework.vault.core.VaultKeyValueOperationsSupport;
 import org.springframework.vault.core.VaultTemplate;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -48,11 +49,11 @@ public class VaultConfiguration {
     @Value("${vault.ssl.key-store-password:#{null}}")
     String sslKeyStorePassword;
 
-    private final VaultEngines engines;
+    private final VaultPaths paths;
 
     @Autowired
-    VaultConfiguration(VaultEngines engines) {
-        this.engines = engines;
+    VaultConfiguration(VaultPaths paths) {
+        this.paths = paths;
     }
 
     @Bean
@@ -78,15 +79,11 @@ public class VaultConfiguration {
             var auth = new ClientCertificateAuthentication(vaultOptions, vaultRestTemplate);
             var vaultTemplate = new VaultTemplate(vaultEndpoint, auth);
 
-            engines.getEngines().forEach(
-                    (engineName, engine) -> {
-                        logger.info("Vault: looking for secrets in \"{}\" engine", engineName);
-                        engine.forEach((secretName, valuesDestinations) -> {
-                            var data = getDataFromSecret(vaultTemplate, engineName, secretName);
-                            valuesDestinations.forEach((vaultValueKey, settingName) ->
-                                    applySettings(data, vaultValueKey, settingName)
-                            );
-                        });
+            paths.getPaths().forEach(
+                    (engineName, children) -> {
+                        logger.info("Vault: Engine name \"{}\"", engineName);
+                        if (children instanceof LinkedHashMap)
+                            traverse(vaultTemplate, engineName, (LinkedHashMap<String, Object>) children, "");
                     }
             );
             logger.info("Vault: Data loaded successfully");
@@ -97,17 +94,45 @@ public class VaultConfiguration {
         return 0;
     }
 
+    public void traverse(VaultTemplate vaultTemplate, String engineName, LinkedHashMap<String, Object> map, String fullPath) {
+        Map<String, Object> secretData = null;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            if (value instanceof LinkedHashMap) {
+                traverse(vaultTemplate, engineName, (LinkedHashMap<String, Object>) value, fullPath += "/" + key);
+            } else if (value instanceof String) { // Обработка других типов Map
+                if(secretData == null) {
+                    secretData = getDataFromSecret(vaultTemplate, engineName, fullPath);
+                }
+                applySettings(secretData, fullPath, key, (String) value);
+            }
+        }
+    }
+
+
     private Map<String, Object> getDataFromSecret(VaultTemplate vaultTemplate, String engineName, String secretName) {
         var vaultKeyValueOperations
                 = vaultTemplate.opsForKeyValue(engineName, VaultKeyValueOperationsSupport.KeyValueBackend.KV_2);
-        logger.info("Vault: Looking for values in \"{}\" secret", secretName);
-        var valuesKv = Objects.requireNonNull(vaultKeyValueOperations.get(secretName));
-        return Objects.requireNonNull(valuesKv.getData());
+        logger.info("Vault: Getting secret \"{}\" from \"{}\" engine", secretName, engineName);
+        var valuesKv = vaultKeyValueOperations.get(secretName);
+        if(valuesKv == null) {
+            throw new RuntimeException("Vault: Not found secret \"" + secretName + "\"");
+        }
+        var data = valuesKv.getData();
+        if(data == null) {
+            throw new RuntimeException("Vault: No data in secret \"" + secretName + "\"");
+        }
+        return data;
     }
 
-    private void applySettings(Map<String, Object> data, String vaultValueKey, String settingName) {
-        String value = (String) Objects.requireNonNull(data.get(vaultValueKey));
-        logger.info("Vault: Loaded \"{}\" from Vault", vaultValueKey);
+    private void applySettings(Map<String, Object> data, String fullPath, String vaultValueKey, String settingName) {
+        String value = (String) data.get(vaultValueKey);
+        if(value == null) {
+            throw new RuntimeException("Vault: Not found KV \"" + fullPath+"/"+vaultValueKey + "\"");
+        }
+        logger.info("Vault: Found \"{}\"", fullPath+"/"+vaultValueKey);
         System.setProperty(settingName, value);
     }
 
@@ -134,6 +159,6 @@ public class VaultConfiguration {
             if (sslKeyPath == null || sslKeyPath.isEmpty())
                 throw new RuntimeException("Vault \"ssl.key\" not specified");
         }
-        if (engines == null || engines.isEmpty()) throw new RuntimeException("Vault \"engines\" not specified");
+        if (paths == null || paths.isEmpty()) throw new RuntimeException("Vault \"engines\" not specified");
     }
 }

@@ -9,14 +9,14 @@ import java.util.Map;
 @Component
 @ConfigurationProperties(prefix = "vault")
 @Data
-public class VaultEngines {
-    private Map<String, Map<String, Map<String, String>>> engines;
+public class VaultPaths {
+    private Map<String, Object> paths;
 
     boolean isEmpty() {
-        return engines.isEmpty();
+        return paths.isEmpty();
     }
 
-    Map<String, Map<String, Map<String, String>>> getEngines() {
-        return engines;
+    Map<String, Object> getPaths() {
+        return paths;
     }
 }
