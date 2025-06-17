@@ -2,6 +2,9 @@ package org.gs.kcusers.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.gs.kcusers.domain.Login;
+import org.gs.kcusers.repositories.LoginRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,6 +14,7 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +28,9 @@ public class CommonController {
     @Value("${front.userroles}")
     protected String userRoles;
 
+    @Autowired
+    protected LoginRepository loginRepository;
+
     protected CommonController() {
 
     }
@@ -31,6 +38,20 @@ public class CommonController {
     CommonController(String adminRoles, String userRoles) {
         this.adminRoles = adminRoles;
         this.userRoles = userRoles;
+    }
+
+    protected void saveLoginEvent() {
+        WebAuthenticationDetails authDetails = getAuthDetails();
+        String userName = getAuthorizedUserName();
+        String sessionId = getJwtSessionId();
+        if (!loginRepository.existsBySessionEqualsIgnoreCaseAndUserNameEqualsIgnoreCase(sessionId, userName)) {
+            loginRepository.save(new Login(
+                    userName,
+                    Instant.now().toEpochMilli(),
+                    sessionId,
+                    authDetails == null ? "" : authDetails.getRemoteAddress())
+            );
+        }
     }
 
     @Bean
@@ -57,6 +78,14 @@ public class CommonController {
         return null;
     }
 
+    protected String getJwtSessionId() {
+        Object principalobject = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principalobject instanceof Jwt jwt) {
+            return jwt.getClaimAsString("sid");
+        }
+        return null;
+    }
+
     protected List<String> grantedAuthoritiesList() {
         Object principalobject = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principalobject instanceof DefaultOidcUser principal) {
@@ -67,8 +96,8 @@ public class CommonController {
                     toList();
         } else if (principalobject instanceof Jwt jwt) {
             return (List<String>) jwt.getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
-                    //getClaimAsMap("realm_access").
-                    //get("roles");
+            //getClaimAsMap("realm_access").
+            //get("roles");
         } else if (principalobject instanceof User user) {
             return user.getAuthorities().
                     stream().

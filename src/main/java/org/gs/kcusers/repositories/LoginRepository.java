@@ -9,5 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LoginRepository extends JpaRepository<Login, String> {
     Page<Login> findByUserNameOrderByAuthTimeDesc(String userName, Pageable pagable);
+    boolean existsBySessionEqualsIgnoreCaseAndUserNameEqualsIgnoreCase(String session, String userName);
 }
 

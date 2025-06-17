@@ -29,6 +29,7 @@ public class UserApiContoller extends CommonController {
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping(path = "/{realmName}/{userName}")
     public String userPage(@PathVariable String realmName, @PathVariable String userName) {
+        saveLoginEvent();
         UserApiResponse response = new UserApiResponse(
                 getPrincipal(),
                 userRepository.findByUserNameAndRealmName(userName, realmName)
@@ -47,6 +48,7 @@ public class UserApiContoller extends CommonController {
     public String putUser(@PathVariable String realmName,
                           @PathVariable String userName,
                           @RequestBody MultiValueMap<String, String> formData) {
+        saveLoginEvent();
         User user = userRepository.findByUserNameAndRealmName(userName, realmName);
 
         String wantedEnabled = formData.getFirst("enabled");

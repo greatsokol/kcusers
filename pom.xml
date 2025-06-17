@@ -15,25 +15,27 @@
     <description>Service to watch for 90 days of inactivity of Keycloak user</description>
     <properties>
         <java.version>17</java.version>
-<!--        <spring.version>6.1.2</spring.version>-->
         <keycloak.version>17.0.0</keycloak.version>
+        <spring.version>3.4.5</spring.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <version>${spring.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>RELEASE</version>
+            <version>${spring.version}</version>
         </dependency>
 
         <dependency>
@@ -44,26 +46,25 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
-            <version>RELEASE</version>
+            <version>${spring.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
-            <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-            <version>RELEASE</version>
+            <version>${spring.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
-            <version>RELEASE</version>
+            <version>${spring.version}</version>
         </dependency>
 
         <dependency>

@@ -32,7 +32,7 @@ public class UserEventsApiController extends CommonController {
     @GetMapping("/{realmName}/{userName}")
     public String eventsPage(@PathVariable String realmName, @PathVariable String userName,
                              @PageableDefault Pageable pagable) {
-
+        saveLoginEvent();
         UserEventsApiResponse response = new UserEventsApiResponse(
                 getPrincipal(),
                 eventRepository.findByUserNameAndRealmNameOrderByCreatedDesc(

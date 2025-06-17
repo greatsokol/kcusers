@@ -40,6 +40,7 @@ public class UsersApiController extends CommonController {
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping("users")
     public String getUsers(@PageableDefault Pageable pagable) {
+        saveLoginEvent();
         return responseToJson(new UsersApiResponse(
                 getPrincipal(),
                 userRepository.findAllByOrderByRealmNameAscUserNameAsc(pagable),
@@ -50,6 +51,7 @@ public class UsersApiController extends CommonController {
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping(path = "users", params = "filter")
     public String getUsers(@RequestParam String filter, @PageableDefault Pageable pagable) {
+        saveLoginEvent();
 
         if (filter.isEmpty()) {
             return getUsers(pagable);

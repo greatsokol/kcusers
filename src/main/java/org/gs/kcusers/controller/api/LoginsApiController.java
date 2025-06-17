@@ -12,30 +12,27 @@ import lombok.Data;
 import org.gs.kcusers.controller.CommonController;
 import org.gs.kcusers.domain.Login;
 import org.gs.kcusers.repositories.LoginRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.Instant;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/logins")
 public class LoginsApiController extends CommonController {
     @Autowired
     protected LoginRepository loginRepository;
-    Logger logger = LoggerFactory.getLogger(LoginsApiController.class);
 
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping("/{userName}")
     public String eventsPage(@PathVariable String userName,
                              @PageableDefault Pageable pagable) {
+        saveLoginEvent();
         LoginsApiResponse response = new LoginsApiResponse(
                 getPrincipal(),
                 loginRepository.findByUserNameOrderByAuthTimeDesc(userName, pagable)
@@ -47,21 +44,6 @@ public class LoginsApiController extends CommonController {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @PreAuthorize("hasAnyAuthority(@getUserRoles)")
-    @PostMapping("/{userName}")
-    public String addLogin(@PathVariable String userName,
-                           @RequestBody MultiValueMap<String, String> formData) {
-        WebAuthenticationDetails authDetails = getAuthDetails();
-
-        loginRepository.save(new Login(
-                userName,
-                Instant.now().toEpochMilli(),
-                formData.getFirst("sessionid"),
-                authDetails == null ? "" : authDetails.getRemoteAddress())
-        );
-        return "";
     }
 
     @Data
