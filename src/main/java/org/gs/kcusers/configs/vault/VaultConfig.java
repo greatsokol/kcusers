@@ -164,26 +164,32 @@ public class VaultConfig {
     }
 
     LinkedHashMap<?, ?> getData(RestTemplate restTemplate, String token, String mountName, String path) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Vault-Token", token);
-        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-        var response =
-                restTemplate.exchange(uri + "/v1/" + mountName + "/data/" + path, HttpMethod.GET, requestEntity, JSONObject.class);
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Vault: Data failed with code " + response.getStatusCode().value());
+        String secretUri = uri + "/v1/" + mountName + "/data/" + path;
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Vault-Token", token);
+            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+            var response =
+                    restTemplate.exchange(secretUri, HttpMethod.GET, requestEntity, JSONObject.class);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Vault: Data failed with code " + response.getStatusCode().value());
+            }
+            JSONObject body = response.getBody();
+            if (body == null) {
+                throw new RuntimeException("Vault: Data failed with empty body");
+            }
+            LinkedHashMap<?, ?> data = (LinkedHashMap<?, ?>) body.get("data");
+            if (data == null) {
+                throw new RuntimeException("Vault: Empty \"data\" object in response");
+            }
+            data = (LinkedHashMap<?, ?>) data.get("data");
+            if (data == null) {
+                throw new RuntimeException("Vault: Empty \"data.data\" object in response");
+            }
+            return data;
+        } catch (Exception e) {
+            throw new RuntimeException("Vault: \""+secretUri+"\" failed with exception", e);
         }
-        JSONObject body = response.getBody();
-        if (body == null) {
-            throw new RuntimeException("Vault: Data failed with empty body");
-        }
-        LinkedHashMap<?, ?> data = (LinkedHashMap<?, ?>) body.get("data");
-        if (data == null) {
-            throw new RuntimeException("Vault: Empty \"data\" object in response");
-        }
-        data = (LinkedHashMap<?, ?>) data.get("data");
-        if (data == null) {
-            throw new RuntimeException("Vault: Empty \"data.data\" object in response");
-        }
-        return data;
+
     }
 }
