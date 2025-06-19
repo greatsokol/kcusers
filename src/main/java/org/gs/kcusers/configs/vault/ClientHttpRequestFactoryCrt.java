@@ -22,10 +22,10 @@ import java.security.cert.X509Certificate;
 import static org.springframework.util.ResourceUtils.getFile;
 import static org.springframework.util.ResourceUtils.isUrl;
 
-public class VaultClientHttpRequestFactoryCrt extends HttpComponentsClientHttpRequestFactory {
+public class ClientHttpRequestFactoryCrt extends HttpComponentsClientHttpRequestFactory {
     private static final String keyStorePsw = "";
 
-    public VaultClientHttpRequestFactoryCrt(
+    public ClientHttpRequestFactoryCrt(
             String certificateFileName,
             String keyFileName
     ) {
@@ -35,7 +35,16 @@ public class VaultClientHttpRequestFactoryCrt extends HttpComponentsClientHttpRe
             var sslContext = new SSLContextBuilder().loadKeyMaterial(keyStore,
                     keyStorePsw.toCharArray()).loadTrustMaterial((cert, url) -> true).build();
             var sslConFactory = new SSLConnectionSocketFactory(sslContext);
-            var cm = PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(sslConFactory).build();
+//            var sslConFactory = SSLConnectionSocketFactoryBuilder.create()
+//                    .setSslContext(sslContext)
+//                    .setTlsVersions(TLS.V_1_3, TLS.V_1_2)
+//                    .build();
+            var cm = PoolingHttpClientConnectionManagerBuilder.create()
+//                    .setDefaultTlsConfig(
+//                            TlsConfig.custom()
+//                                    .setSupportedProtocols(TLS.V_1_3, TLS.V_1_2)
+//                                    .build())
+                    .setSSLSocketFactory(sslConFactory).build();
             var httpClient = HttpClients.custom().setConnectionManager(cm).build();
             setHttpClient(httpClient);
         } catch (Exception e) {

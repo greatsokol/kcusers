@@ -12,8 +12,8 @@ import java.security.KeyStore;
 import static org.springframework.util.ResourceUtils.getFile;
 import static org.springframework.util.ResourceUtils.isUrl;
 
-public class VaultClientHttpRequestFactoryPkcs extends HttpComponentsClientHttpRequestFactory {
-    public VaultClientHttpRequestFactoryPkcs(
+public class ClientHttpRequestFactoryPkcs extends HttpComponentsClientHttpRequestFactory {
+    public ClientHttpRequestFactoryPkcs(
             String keyStoreLocation,
             String keyStorePassword
     ) {
@@ -29,6 +29,10 @@ public class VaultClientHttpRequestFactoryPkcs extends HttpComponentsClientHttpR
             var sslContext = new SSLContextBuilder().loadKeyMaterial(keyStore,
                     pKeyStorePassword).loadTrustMaterial((cert, url) -> true).build();
             var sslConFactory = new SSLConnectionSocketFactory(sslContext);
+//            var sslConFactory = SSLConnectionSocketFactoryBuilder.create()
+//                    .setSslContext(sslContext)
+//                    .setTlsVersions(TLS.V_1_2, TLS.V_1_3)
+//                    .build();
             var cm = PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(sslConFactory).build();
             var httpClient = HttpClients.custom().setConnectionManager(cm).build();
             setHttpClient(httpClient);

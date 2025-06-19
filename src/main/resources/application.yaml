@@ -1,4 +1,19 @@
 spring:
+#  cloud:
+#    vault:
+#      uri: https://localhost:8200
+#      authentication: CERT
+#      ssl:
+#        cert-auth-path: classpath:sokolov.personal.ca2.crt
+#        key-store: classpath:sokolov.personal.ca2.p12
+#        key-store-password: 1979
+#        key-store-type: PKCS
+#      kv:
+#        backend: apim
+#        enabled: true
+#        default-context: apps.config.kcusers
+
+
   security:
     oauth2:
       resourceserver:
@@ -24,6 +39,7 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/kcusers
+
 
 #-----------------------------------------------------------------------------
 server:
@@ -95,16 +111,15 @@ consul:
 
 vault:
   enabled: true
-  host: localhost
-  port: 8200
+  uri: https://localhost:8200
   ssl:
     # store/cert
-    type: store
-    key-store: classpath:localhost.p12
-    key-store-type: PKCS12
-    key-store-password: 1979
-    #certificate: classpath:localhost.crt
-    #key: classpath:localhost.key
+    type: cert
+#    key-store: classpath:localhost.p12
+#    key-store-type: PKCS12
+#    key-store-password: 1979
+    certificate: classpath:sokolov.personal.ca2.crt
+    key: classpath:sokolov.personal.ca2.key
   paths:
     apim:
       apps:
