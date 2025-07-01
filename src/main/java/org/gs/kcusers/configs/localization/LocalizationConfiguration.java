@@ -2,7 +2,7 @@
  * Created by Eugene Sokolov 21.06.2024, 09:43.
  */
 
-package org.gs.kcusers.configs;
+package org.gs.kcusers.configs.localization;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
