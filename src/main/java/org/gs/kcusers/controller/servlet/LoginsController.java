@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Map;
 
+import static org.gs.kcusers.utils.Utils.getAuthorizedUserName;
+
 @Controller
 @RequestMapping("/logins")
 public class LoginsController extends CommonController {

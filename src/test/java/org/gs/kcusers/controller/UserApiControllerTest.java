@@ -4,7 +4,7 @@
 
 package org.gs.kcusers.controller;
 
-import org.gs.kcusers.controller.api.UserApiContoller;
+import org.gs.kcusers.controller.api.UserApiController;
 import org.gs.kcusers.domain.User;
 import org.gs.kcusers.repositories.UserRepository;
 import org.gs.kcusers.service.KeycloakClient;
@@ -25,8 +25,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(UserApiContoller.class)
-class UserApiContollerTest {
+@WebMvcTest(UserApiController.class)
+class UserApiControllerTest {
     private final String userName = "UserName";
     private final String authorizedUserName = "Admin Name";
     private final String realmName = "realmName";

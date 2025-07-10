@@ -6,9 +6,11 @@ package org.gs.kcusers.service;
 //import jakarta.ws.rs.ProcessingException;
 
 import org.apache.http.conn.HttpHostConnectException;
-import org.gs.kcusers.configs.ProtectedUsers;
+import org.gs.kcusers.configs.yamlobjects.ProtectedUsers;
+import org.gs.kcusers.domain.Audit;
 import org.gs.kcusers.domain.Event;
 import org.gs.kcusers.domain.User;
+import org.gs.kcusers.repositories.AuditRepository;
 import org.gs.kcusers.repositories.EventRepository;
 import org.gs.kcusers.repositories.UserRepository;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
@@ -19,8 +21,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
-import org.keycloak.representations.idm.EventRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.idm.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,10 +39,9 @@ import java.io.FileNotFoundException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
+import static org.gs.kcusers.configs.yamlobjects.Configurations.KCUSERS_SCHEDULED_SERVICE;
 import static org.springframework.util.ResourceUtils.getFile;
 import static org.springframework.util.ResourceUtils.isUrl;
 
@@ -56,6 +56,8 @@ public class KeycloakClient {
     private final UserRepository userRepository;
 
     private final EventRepository eventRepository;
+
+    private final AuditRepository auditRepository;
 
     @Value("${service.keycloakclient.realms}")
     private String KEYCLOAK_REALMS;
@@ -78,7 +80,7 @@ public class KeycloakClient {
     @Value("${service.keycloakclient.client.client-secret:#{null}}")
     private String KEYCLOAK_CLIENT_SECRET;
 
-    @Value("${service.keycloakclient.inactivity.dryrun}")
+    @Value("${service.keycloakclient.inactivity.dryrun:false}")
     private boolean KEYCLOAK_DRY_RUN;
 
     @Value("${service.keycloakclient.mtls.enabled:false}")
@@ -96,11 +98,13 @@ public class KeycloakClient {
     public KeycloakClient(@Value("${service.cron}") String cron,
                           ProtectedUsers protectedUsers,
                           UserRepository userRepository,
-                          EventRepository eventRepository) {
+                          EventRepository eventRepository,
+                          AuditRepository auditRepository) {
         logger.info("Scheduled task with cron {}", cron);
         this.protectedUsers = protectedUsers;
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
+        this.auditRepository = auditRepository;
     }
 
     @PostConstruct
@@ -156,6 +160,10 @@ public class KeycloakClient {
         try {
             builder.resteasyClient((ResteasyClient) (ClientBuilderWrapper.create(SSLContext.getDefault(), false).register(JacksonProvider.class, 100)).build());
         } catch (NoSuchAlgorithmException e) {
+            auditRepository.save(new Audit(
+                    Audit.ENT_KEYCLOAK,
+                    null,
+                    e.getLocalizedMessage()));
             throw new RuntimeException(e);
         }
 
@@ -195,7 +203,11 @@ public class KeycloakClient {
                 .orElse(0L);
     }
 
+
     private User userPresentationToUser(Keycloak keycloak, String realmName, UserRepresentation userRepresentation) {
+        logUserRepresentation(realmName, userRepresentation);
+
+
         var lastLoginTime = getLastLoginTime(keycloak, realmName, userRepresentation);
 
         User user = userRepository.findByUserNameAndRealmName(userRepresentation.getUsername(), realmName);
@@ -240,12 +252,26 @@ public class KeycloakClient {
         } catch (ProcessingException | ForbiddenException | NotFoundException e) {
             var cause = e.getCause();
             if (cause instanceof NotFoundException || e instanceof NotFoundException) {
-                logger.error("Realm {} not found", realmName);
+                String message = String.format("Realm %s not found", realmName);
+                logger.error(message);
+                auditRepository.save(new Audit(
+                        Audit.ENT_KEYCLOAK,
+                        realmName,
+                        message));
             } else if (cause instanceof HttpHostConnectException ||
                     cause instanceof NotAuthorizedException ||
                     e instanceof ForbiddenException) {
-                logger.error("Connection to realm {} refused: {}", realmName, e.getLocalizedMessage());
+                String message = String.format("Connection to realm %s refused: %s", realmName, e.getLocalizedMessage());
+                logger.error(message);
+                auditRepository.save(new Audit(
+                        Audit.ENT_KEYCLOAK,
+                        realmName,
+                        message));
             } else {
+                auditRepository.save(new Audit(
+                        Audit.ENT_KEYCLOAK,
+                        realmName,
+                        e.getLocalizedMessage()));
                 throw e;
             }
         }
@@ -256,7 +282,7 @@ public class KeycloakClient {
     private void addNewUser(User user) {
         userRepository.save(user);// add new user
         eventRepository.save(new Event(user.getUserName(), user.getRealmName(), Instant.now().toEpochMilli(),
-                "system", "add user from Keycloack", user.getEnabled()));
+                KCUSERS_SCHEDULED_SERVICE, "Добавлен пользователь Keycloak", user.getEnabled()));
     }
 
     private boolean forceUpdateUser(User ourSavedUser, User user) {
@@ -362,6 +388,14 @@ public class KeycloakClient {
             userRepresentation.setEnabled(user.getEnabled());
             if (!KEYCLOAK_DRY_RUN) {
                 userResource.update(userRepresentation);
+                auditRepository.save(new Audit(
+                        Audit.ENT_KEYCLOAK,
+                        Audit.SUBTYPE_UPDATE,
+                        user.getRealmName(),
+                        user.getUserName(),
+                        user.getEnabled(),
+                        user.getComment())
+                );
             } else {
                 logger.info("DRY RUN ENBLED. Update of user {} ({}) skipped", user.getUserName(), user.getRealmName());
             }
@@ -375,8 +409,18 @@ public class KeycloakClient {
             );
             return true;
         } catch (ForbiddenException e) {
-            logger.error("Error while updating user {} ({}): {}", user.getUserName(),
+            String message = String.format("Error while updating user %s (%s): %s", user.getUserName(),
                     user.getRealmName(), e.getLocalizedMessage());
+
+            logger.error(message);
+
+            auditRepository.save(new Audit(
+                    Audit.ENT_KEYCLOAK,
+                    Audit.SUBTYPE_ERR,
+                    user.getRealmName(),
+                    user.getUserName(),
+                    user.getEnabled(),
+                    e.getLocalizedMessage()));
         }
         return false;
     }
@@ -407,5 +451,38 @@ public class KeycloakClient {
         try (Keycloak keycloak = buildKeycloak()) {
             return updateUser(keycloak, user, admLogin);
         }
+    }
+
+    private void logUserRepresentation(String realmName, UserRepresentation user) {
+        logger.info("DEBUG USERREPRESENTATION realm: {}, origin: {}, name: {}, enabled: {}, " +
+                        "emailVerified: {}, firstName: {}, lastName: {}, email: {}, " +
+                        "federationLink: {}, attributes: {}, realmRoles: {}, clientRoles: {}",
+
+                realmName,
+                user.getOrigin(),
+                user.getUsername(),
+                user.isEnabled(),
+                user.isEmailVerified(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getFederationLink(),
+                user.getAttributes(),
+                user.getRealmRoles(),
+                user.getClientRoles()
+
+        );
+
+
+
+        //protected List<CredentialRepresentation> credentials;
+        //protected Set<String> disableableCredentialTypes;
+        //protected List<String> requiredActions;
+        //protected List<FederatedIdentityRepresentation> federatedIdentities;
+
+        //protected Map<String, List<String>> clientRoles;
+        //protected List<UserConsentRepresentation> clientConsents;
+        //protected Integer notBefore;
+
     }
 }

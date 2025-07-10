@@ -1,9 +1,6 @@
 package org.gs.kcusers.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
@@ -12,12 +9,12 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
+@EntityListeners(EntityListener.class)
 @Data
 @AllArgsConstructor
 @IdClass(Event.EventPK.class)
 @Table(name = "events", schema = "kcusers")
 public class Event {
-
     @Id
     String userName;
     @Id

@@ -1,19 +1,4 @@
 spring:
-#  cloud:
-#    vault:
-#      uri: https://localhost:8200
-#      authentication: CERT
-#      ssl:
-#        cert-auth-path: classpath:sokolov.personal.ca2.crt
-#        key-store: classpath:sokolov.personal.ca2.p12
-#        key-store-password: 1979
-#        key-store-type: PKCS
-#      kv:
-#        backend: apim
-#        enabled: true
-#        default-context: apps.config.kcusers
-
-
   security:
     oauth2:
       resourceserver:
@@ -24,21 +9,20 @@ spring:
           keycloak:
             issuer-uri: ${front.issuer-uri}
             user-name-attribute: preferred_username
-  #        registration:
-  #          keycloak:
-  #            client-id: ${front.client-id}
-  #            client-secret: ${front.client-secret}
-  #            scope: openid
-
-  #  jpa:
-  #    show-sql: false
-  #    properties:
-  #      hibernate:
-  #        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/kcusers
+
+  jpa:
+    show-sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+
+  web:
+    resources:
+      add-mappings: false
 
 
 #-----------------------------------------------------------------------------
@@ -51,8 +35,8 @@ server:
     key-store-type: PKCS12
     key-store-password: 1979
 
-    client-auth: need
-    trust-certificate: classpath:localhost.crt
+#    client-auth: need
+#    trust-certificate: classpath:sokolov.personal.ca2.crt
 
 
 #-----------------------------------------------------------------------------

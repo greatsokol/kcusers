@@ -2,16 +2,15 @@ package org.gs.kcusers.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.gs.kcusers.domain.Audit;
 import org.gs.kcusers.domain.Login;
+import org.gs.kcusers.repositories.AuditRepository;
 import org.gs.kcusers.repositories.LoginRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.time.Instant;
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.gs.kcusers.configs.Configurations.ROLES_TOKEN_CLAIM_NAME;
+import static org.gs.kcusers.utils.Utils.*;
 
 public class CommonController {
     @Value("${front.adminroles}")
@@ -30,6 +29,8 @@ public class CommonController {
 
     @Autowired
     protected LoginRepository loginRepository;
+    @Autowired
+    protected AuditRepository auditRepository;
 
     protected CommonController() {
 
@@ -41,10 +42,18 @@ public class CommonController {
     }
 
     protected void saveLoginEvent() {
-        WebAuthenticationDetails authDetails = getAuthDetails();
+
         String userName = getAuthorizedUserName();
-        String sessionId = getJwtSessionId();
+        String sessionId = getAuthorizedUserJwtSessionId();
         if (!loginRepository.existsBySessionEqualsIgnoreCaseAndUserNameEqualsIgnoreCase(sessionId, userName)) {
+            auditRepository.save(new Audit(
+                    Audit.ENT_API,
+                    Audit.SUBTYPE_SUCCESS,
+                    HttpStatus.OK.value(),
+                    "login success")
+            );
+
+            WebAuthenticationDetails authDetails = getAuthDetails();
             loginRepository.save(new Login(
                     userName,
                     Instant.now().toEpochMilli(),
@@ -66,56 +75,17 @@ public class CommonController {
         return Arrays.asList(adminRoles.split(","));
     }
 
-    protected String getAuthorizedUserName() {
-        Object principalobject = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principalobject instanceof DefaultOidcUser principal) {
-            return principal.getPreferredUsername();
-        } else if (principalobject instanceof Jwt jwt) {
-            return jwt.getClaimAsString("preferred_username");
-        } else if (principalobject instanceof User user) {
-            return user.getUsername();
-        }
-        return null;
-    }
-
-    protected String getJwtSessionId() {
-        Object principalobject = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principalobject instanceof Jwt jwt) {
-            return jwt.getClaimAsString("sid");
-        }
-        return null;
-    }
-
-    protected List<String> grantedAuthoritiesList() {
-        Object principalobject = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principalobject instanceof DefaultOidcUser principal) {
-            return principal.
-                    getAuthorities().
-                    stream().
-                    map(GrantedAuthority::getAuthority).
-                    toList();
-        } else if (principalobject instanceof Jwt jwt) {
-            return (List<String>) jwt.getClaimAsStringList(ROLES_TOKEN_CLAIM_NAME);
-            //getClaimAsMap("realm_access").
-            //get("roles");
-        } else if (principalobject instanceof User user) {
-            return user.getAuthorities().
-                    stream().
-                    map(GrantedAuthority::getAuthority).
-                    toList();
-        } else return null;
-    }
-
-    protected String grantedAuthoritiesListAsString() {
-        return String.join(", ", grantedAuthoritiesList());
-    }
 
     protected Boolean userRolesGranted() {
-        return grantedAuthoritiesList().stream().anyMatch(getUserRoles()::contains);
+        var list = grantedAuthoritiesList();
+        if (list == null) return false;
+        return list.stream().anyMatch(getUserRoles()::contains);
     }
 
     protected Boolean adminRolesGranted() {
-        return grantedAuthoritiesList().stream().anyMatch(getAdminRoles()::contains);
+        var list = grantedAuthoritiesList();
+        if (list == null) return false;
+        return list.stream().anyMatch(getAdminRoles()::contains);
     }
 
 

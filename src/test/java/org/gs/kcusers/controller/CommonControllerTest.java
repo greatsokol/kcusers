@@ -57,7 +57,7 @@ class CommonControllerTest {
     @Test
     @WithMockUser(username = userName)
     void getAuthorizedUserName() {
-        var principalName = testController.getAuthorizedUserName();
+        var principalName = org.gs.kcusers.utils.Utils.getAuthorizedUserName();
         Assert.isTrue(principalName.equals(userName),
                 "principal name (" + principalName + ") not equal to " + userName);
     }
@@ -68,7 +68,7 @@ class CommonControllerTest {
             userAuthority
     })
     void grantedAuthoritiesList() {
-        var authorities = testController.grantedAuthoritiesList();
+        var authorities = org.gs.kcusers.utils.Utils.grantedAuthoritiesList();
         assertNotNull(authorities);
         List<String> testAuthorities = Arrays.asList(adminAuthority, userAuthority);
         Assert.isTrue(
@@ -83,7 +83,7 @@ class CommonControllerTest {
             userAuthority
     })
     void grantedAuthoritiesListAsString() {
-        var authorities = testController.grantedAuthoritiesListAsString();
+        var authorities = org.gs.kcusers.utils.Utils.grantedAuthoritiesListAsString();
         String testAuthorities = adminAuthority + ", " + userAuthority;
         Assert.isTrue(
                 authorities.equals(testAuthorities),

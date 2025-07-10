@@ -1,41 +1,60 @@
-create schema kcusers;
-
-drop table kcusers.users;
-
-create table kcusers.users
-    (
-    user_name varchar(255) not null,
-    realm_name varchar(255) not null,
-    user_id varchar(255) not null,
-    created bigint not null,
-    last_login bigint,
-    enabled boolean not null,
+create table if not exists kcusers.users
+(
+    user_name             varchar(255) not null,
+    realm_name            varchar(255) not null,
+    user_id               varchar(255) not null,
+    created               bigint       not null,
+    last_login            bigint,
+    enabled               boolean      not null,
     manually_enabled_time bigint,
-    comment varchar(255),
+    comment               varchar(255),
     primary key (user_name, realm_name)
-    );
+);
 
-drop table kcusers.events;
-
-create table kcusers.events
-    (
-    user_name varchar(255) not null,
+create table if not exists kcusers.events
+(
+    user_name  varchar(255) not null,
     realm_name varchar(255) not null,
-    created bigint not null,
-    comment varchar(255),
-    adm_login varchar (255) not null,
-    enabled boolean,
+    created    bigint       not null,
+    comment    varchar(255),
+    adm_login  varchar(255) not null,
+    enabled    boolean,
     primary key (user_name, realm_name, created)
-    );
+);
 
-drop table kcusers.logins;
-
-create table kcusers.logins
-    (
+create table if not exists kcusers.logins
+(
     user_name varchar(255) not null,
-    auth_time bigint not null,
-    session varchar(255),
-    address varchar(255),
-    primary key (user_name, auth_time)
-    );
+    auth_time bigint       not null,
+    session   varchar(255) not null,
+    address   varchar(255),
+    primary key (user_name, auth_time, session)
+);
+
+create table kcusers.audit
+(
+    audit_event_created  bigint       not null,
+    audit_event_entity   varchar(10)  not null,
+    audit_event_id       varchar(255) not null,
+    audit_event_sub_type varchar(10)  not null,
+    audit_event_type     varchar(10)  not null,
+    api_http_code        integer,
+    api_method           varchar(20),
+    api_path             varchar(255),
+    authorized_user      varchar(255),
+    description          varchar(255),
+    kc_enabled           boolean,
+    kc_realm             varchar(255),
+    kc_user              varchar(255),
+    table_fields         varchar(255),
+    table_name           varchar(255),
+    token_exp            bigint,
+    token_groups         varchar(255),
+    token_iat            bigint,
+    token_sid            varchar(255),
+    token_user           varchar(255),
+    primary key (audit_event_created, audit_event_entity, audit_event_id, audit_event_sub_type, audit_event_type)
+);
+
+
 

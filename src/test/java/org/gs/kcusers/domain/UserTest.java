@@ -4,7 +4,7 @@
 
 package org.gs.kcusers.domain;
 
-import org.gs.kcusers.configs.Configurations;
+import org.gs.kcusers.configs.yamlobjects.Configurations;
 import org.junit.jupiter.api.*;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;

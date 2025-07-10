@@ -1,4 +1,4 @@
-package org.gs.kcusers.configs;
+package org.gs.kcusers.configs.yamlobjects;
 
 
 import org.springframework.beans.factory.annotation.Value;
@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class Configurations {
     public static String ROLES_TOKEN_CLAIM_NAME = "groups";//"realm_access.roles";
+
+    public static String KCUSERS_SCHEDULED_SERVICE = "kcusers_scheduled_service";
 
     private static int inactivity_days;
 

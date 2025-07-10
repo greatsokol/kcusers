@@ -1,14 +1,11 @@
 package org.gs.kcusers.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
-import org.gs.kcusers.configs.Configurations;
-import org.gs.kcusers.configs.LocalizedMessages;
+import org.gs.kcusers.configs.yamlobjects.Configurations;
+import org.gs.kcusers.configs.localization.LocalizedMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 @Entity
+@EntityListeners(EntityListener.class)
 @Data
 @AllArgsConstructor
 @IdClass(User.UserPK.class)

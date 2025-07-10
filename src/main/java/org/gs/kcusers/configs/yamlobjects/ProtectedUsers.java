@@ -1,4 +1,4 @@
-package org.gs.kcusers.configs;
+package org.gs.kcusers.configs.yamlobjects;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

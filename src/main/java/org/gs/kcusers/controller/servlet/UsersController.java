@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
+import static org.gs.kcusers.utils.Utils.getAuthorizedUserName;
+
 @Controller
 @RequestMapping("/")
 public class UsersController extends CommonController {

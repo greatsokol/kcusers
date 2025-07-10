@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.Map;
 
+import static org.gs.kcusers.utils.Utils.getAuthorizedUserName;
+import static org.gs.kcusers.utils.Utils.grantedAuthoritiesListAsString;
+
 @Controller
 @RequestMapping("/access-denied")
 public class AccessDeniedController extends CommonController {
