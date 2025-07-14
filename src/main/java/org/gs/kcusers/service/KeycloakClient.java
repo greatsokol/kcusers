@@ -397,7 +397,7 @@ public class KeycloakClient {
                         user.getComment())
                 );
             } else {
-                logger.info("DRY RUN ENBLED. Update of user {} ({}) skipped", user.getUserName(), user.getRealmName());
+                logger.info("DRY RUN ENABLED. Update of user {} ({}) skipped", user.getUserName(), user.getRealmName());
             }
             userRepository.save(user);
             eventRepository.save(
@@ -408,7 +408,7 @@ public class KeycloakClient {
                     )
             );
             return true;
-        } catch (ForbiddenException e) {
+        } catch (Exception e) {
             String message = String.format("Error while updating user %s (%s): %s", user.getUserName(),
                     user.getRealmName(), e.getLocalizedMessage());
 
@@ -420,7 +420,7 @@ public class KeycloakClient {
                     user.getRealmName(),
                     user.getUserName(),
                     user.getEnabled(),
-                    e.getLocalizedMessage()));
+                    message));
         }
         return false;
     }

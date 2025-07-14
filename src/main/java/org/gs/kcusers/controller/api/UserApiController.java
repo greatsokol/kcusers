@@ -27,13 +27,18 @@ public class UserApiController extends CommonController {
 
     @PreAuthorize("hasAnyAuthority(@getUserRoles)")
     @GetMapping(path = "/{realmName}/{userName}")
-    public UserApiResponse userPage(@PathVariable String realmName, @PathVariable String userName) {
+    public UserApiResponse userPage(@PathVariable String realmName, @PathVariable String userName, boolean successResult) {
         saveLoginEvent();
 
-        return new UserApiResponse(
+        var response = new UserApiResponse(
                 getPrincipal(),
                 userRepository.findByUserNameAndRealmName(userName, realmName)
         );
+
+        if (!successResult) {
+            response.payload.setComment("Ошибка операции");
+        }
+        return response;
     }
 
     @PreAuthorize("hasAnyAuthority(@getAdminRoles)")
@@ -43,13 +48,18 @@ public class UserApiController extends CommonController {
                                    @RequestBody MultiValueMap<String, String> formData) {
         saveLoginEvent();
         User user = userRepository.findByUserNameAndRealmName(userName, realmName);
+        User tmpUser = new User(user);
+
 
         String wantedEnabled = formData.getFirst("enabled");
         boolean enabled = wantedEnabled != null && wantedEnabled.equals("true");
-        user.setUserStatusFromController(enabled, getAuthorizedUserName());
-        keycloakClient.updateUserFromController(user, getAuthorizedUserName());
-
-        return userPage(realmName, userName);
+        String adminName = getAuthorizedUserName();
+        tmpUser.setUserStatusFromController(enabled, adminName);
+        if (keycloakClient.updateUserFromController(tmpUser, adminName)) {
+            user.setUserStatusFromController(enabled, adminName);
+            return userPage(realmName, userName, true);
+        }
+        return userPage(realmName, userName, false);
     }
 
     @Data

@@ -188,7 +188,7 @@ public class Audit {
         this.authorizedUser = getAuthorizedUserOrServiceName();
         this.kcRealm = kcRealm;
         this.kcUser = kcUser;
-        this.description = description;
+        this.description = cutString(description, 255);
         this.kcEnabled = kcEnabled;
         fillTokenData();
     }
@@ -200,7 +200,7 @@ public class Audit {
         this.auditEventEntity = entity;
         this.authorizedUser = getAuthorizedUserOrServiceName();
         this.kcRealm = kcRealm;
-        this.description = description;
+        this.description = cutString(description, 255);
         fillTokenData();
     }
 

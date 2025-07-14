@@ -43,6 +43,17 @@ public class User {
     public User() {
     }
 
+    public User(User copy) {
+        userName = copy.userName;
+        realmName = copy.realmName;
+        userId = copy.userId;
+        lastLogin = copy.lastLogin;
+        created = copy.created;
+        enabled = copy.enabled;
+        manuallyEnabledTime = copy.manuallyEnabledTime;
+        comment = copy.comment;
+    }
+
     private String addNow() {
         String formattedDate = DateTimeFormatter.ofPattern("dd MMMM yyyy, HH:mm:ss z")
                 .withZone(ZoneId.systemDefault())

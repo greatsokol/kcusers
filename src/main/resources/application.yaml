@@ -51,7 +51,7 @@ front:
 service:
   cron: 00 * * * * *
   keycloakclient:
-    realms: master,APIM,Finstar
+    realms: master,APIM,APIM_FS
     url: https://keycloak.local
     client:
       client-id: kcusers_service_client
