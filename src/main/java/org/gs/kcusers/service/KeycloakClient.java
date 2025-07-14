@@ -385,9 +385,14 @@ public class KeycloakClient {
             UsersResource usersResource = keycloak.realm(user.getRealmName()).users();
             UserResource userResource = usersResource.get(user.getUserId());
             UserRepresentation userRepresentation = userResource.toRepresentation();
-            userRepresentation.setEnabled(user.getEnabled());
+            //userRepresentation.setEnabled(user.getEnabled());
+
+            UserRepresentation newUserRepresentation = new UserRepresentation();
+            newUserRepresentation.setId(userRepresentation.getId());
+            newUserRepresentation.setEnabled(user.getEnabled());
+
             if (!KEYCLOAK_DRY_RUN) {
-                userResource.update(userRepresentation);
+                userResource.update(newUserRepresentation);
                 auditRepository.save(new Audit(
                         Audit.ENT_KEYCLOAK,
                         Audit.SUBTYPE_UPDATE,
